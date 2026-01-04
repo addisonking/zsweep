@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createGrid, placeMines, revealCell, DIRECTIONS, type Cell } from '$lib/minesweeper';
   import { onMount, onDestroy } from 'svelte';
-  import { Flag, Bomb, Grid3x3, Wrench, X, Flame, Skull, Flower2 } from 'lucide-svelte';
+  import { Flag, Bomb, Grid3x3, Wrench, X, Flame, Skull, Flower2, User, LogOut } from 'lucide-svelte';
   import ResultView from '$lib/ResultView.svelte';
 
   const PRESETS = [
@@ -16,6 +16,8 @@
   let mines = 40;
 
   let showCustomModal = false;
+  // REMOVED: showLoginModal logic (we use a separate page now)
+  
   let customRows = 20;
   let customCols = 20;
   let customMines = 50;
@@ -34,6 +36,7 @@
   
   let isMouseDown = false;
   let hoveredCell: { r: number, c: number } | null = null;
+  let currentUser: string | null = null;
 
   $: StatusIcon = (() => {
     if (gameState === 'won') return Flower2;
@@ -41,6 +44,11 @@
     if (isMouseDown && gameState !== 'pending') return Flame;
     return Bomb;
   })();
+
+  function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem('zensweep_user');
+  }
 
   function applyPreset(preset: typeof PRESETS[0]) {
     activePresetLabel = preset.label;
@@ -143,7 +151,6 @@
     clearInterval(timerInterval);
     if (clicksThisSecond > 0) clickHistory.push(clicksThisSecond);
     
-    // --- ACCURACY LOGIC ---
     if (win) {
         finalAccuracy = 100;
     } else {
@@ -215,7 +222,12 @@
     }
   }
 
-  onMount(() => startNewGame());
+  onMount(() => {
+    const savedUser = localStorage.getItem('zensweep_user');
+    if (savedUser) currentUser = savedUser;
+    startNewGame();
+  });
+
   onDestroy(() => clearInterval(timerInterval));
 </script>
 
@@ -224,8 +236,41 @@
     on:mouseup={() => isMouseDown = false}
 />
 
-<div class="min-h-screen bg-bg text-text flex flex-col items-center pt-16 font-mono">
+<div class="min-h-screen bg-bg text-text flex flex-col items-center font-mono">
   
+  <div class="w-full max-w-5xl flex justify-between items-center p-8 mb-4 animate-in fade-in slide-in-from-top-4 duration-500">
+      <div class="flex items-center gap-2 select-none">
+          <Bomb size={24} class="text-main" />
+          <h1 class="text-2xl font-bold text-text tracking-tight">zen<span class="text-main">sweep</span></h1>
+      </div>
+
+      <div class="flex items-center gap-6 text-sm">
+          {#if currentUser}
+              <div class="flex items-center gap-4">
+                  <div class="flex items-center gap-2 text-main">
+                      <User size={16} />
+                      <span class="font-bold">{currentUser}</span>
+                  </div>
+                  <button 
+                    on:click={handleLogout}
+                    class="opacity-50 hover:opacity-100 hover:text-error transition-all"
+                    title="Log Out"
+                  >
+                      <LogOut size={16} />
+                  </button>
+              </div>
+          {:else}
+              <a 
+                href="/login"
+                class="flex items-center justify-center w-8 h-8 rounded hover:bg-sub/10 text-sub hover:text-text transition-colors"
+                title="Login"
+              >
+                  <User size={18} />
+              </a>
+          {/if}
+      </div>
+  </div>
+
   {#if gameState === 'won' || gameState === 'lost'}
     
     <ResultView 
@@ -336,7 +381,6 @@
                     <X size={20} />
                 </button>
             </div>
-            
             <div class="space-y-4">
                 <div class="flex flex-col gap-1">
                     <label class="text-xs text-sub uppercase">Rows</label>
@@ -351,7 +395,6 @@
                     <input type="number" bind:value={customMines} class="bg-sub/10 border border-sub/20 rounded p-2 text-text focus:border-main focus:ring-0 outline-none" />
                 </div>
             </div>
-
             <button 
                 on:click={applyCustom}
                 class="w-full mt-6 bg-sub/20 hover:bg-main hover:text-bg text-main font-bold py-2 rounded transition-colors"
