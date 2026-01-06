@@ -450,6 +450,7 @@
 
 		const scoreValue = gameMode === 'time' ? gridsSolved : timer;
 		const settingLabel = gameMode === 'time' ? timeLimit.toString() : currentSize.label;
+		const minesValue = gameMode === 'time' ? gridsSolved * currentSize.mines : currentSize.mines;
 
 		await supabase.from('game_results').insert({
 			user_id: user.id,
@@ -457,7 +458,9 @@
 			setting: settingLabel,
 			win: win,
 			score: scoreValue,
-			accuracy: finalAccuracy
+			accuracy: finalAccuracy,
+			total_3bv: session3BV,
+			total_mines: minesValue // <--- SEND TO DB
 		});
 	}
 
@@ -475,11 +478,16 @@
 		<div class="flex items-center gap-4 transition-all duration-300">
 			<a
 				href="{base}/about"
-				class="flex select-none items-center gap-2 transition-all
+				class="group flex select-none items-center gap-3 transition-all
 				{gameState === 'playing' ? 'pointer-events-none opacity-50 grayscale' : 'hover:opacity-80'}"
 			>
-				<Bomb size={24} class={gameState === 'playing' ? 'text-sub' : 'text-main'} />
-				<h1 class="text-2xl font-bold tracking-tight text-text">
+				<Bomb
+					size={28}
+					strokeWidth={2.5}
+					class="transition-transform duration-300 group-hover:scale-110
+					{gameState === 'playing' ? 'text-sub' : 'text-main'}"
+				/>
+				<h1 class="font-mono text-3xl font-black leading-none tracking-tighter text-text">
 					z<span class={gameState === 'playing' ? 'text-text' : 'text-main'}>sweep</span>
 				</h1>
 			</a>
@@ -504,7 +512,6 @@
 				>
 			</a>
 		</div>
-
 		<div
 			class="flex items-center gap-6 text-sm transition-opacity duration-300
 			{gameState === 'playing' ? 'pointer-events-none opacity-0' : 'opacity-100'}"

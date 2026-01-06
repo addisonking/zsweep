@@ -15,7 +15,7 @@
         1.95'/%3E%3Cpath d='m22 2-1.5 1.5'/%3E%3C/svg%3E"
 	/>
 
-	<title>Zsweep | A minimalistic, customizable minesweeper</title>
+	<title>Zsweep</title>
 
 	<meta
 		name="description"

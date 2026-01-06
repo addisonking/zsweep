@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation'; // Import goto for smoother navigation
+	import { base } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 	import {
 		User,
@@ -9,10 +11,10 @@
 		Download,
 		Bomb,
 		LogOut,
-		ArrowLeft,
 		Search,
 		ChevronRight,
-		Activity
+		Activity,
+		Zap
 	} from 'lucide-svelte';
 	import { currentTheme } from '$lib/themeStore';
 	import { THEMES } from '$lib/themes';
@@ -52,12 +54,12 @@
 		started: 0,
 		completed: 0,
 		timeSweeping: '00:00:00',
-		totalCellsCleared: 0,
-		highestAcc: 0,
+		totalMinesSwept: 0,
 		completionRate: 0
 	};
 
 	let bests: any[] = [];
+	let best3BVs: Record<string, { value: number; date: string }> = {};
 	let heatmapData: { date: string; count: number; intensity: number }[] = [];
 
 	onMount(async () => {
@@ -65,11 +67,10 @@
 			data: { user }
 		} = await supabase.auth.getUser();
 		if (!user) {
-			window.location.href = '/login';
+			goto('/login');
 			return;
 		}
 
-		// Fetch Profile & History
 		const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 		profile = p;
 		currentUser = p?.username;
@@ -95,30 +96,41 @@
 			stats.started > 0 ? Math.round((stats.completed / stats.started) * 100) : 0;
 
 		let totalSeconds = 0;
-		let totalCellsSwept = 0; // Renamed for clarity
+		let minesSweptCount = 0;
 		const groups: Record<string, any> = {};
+		const categories = ['15', '30', '60', '120', '9x9', '16x16', '30x16'];
+		categories.forEach((c) => (best3BVs[c] = { value: 0, date: '' }));
 
 		data.forEach((g) => {
-			// Time Calculation
-			if (g.mode === 'standard') totalSeconds += g.win ? g.score : g.score || 0;
-			else totalSeconds += parseInt(g.setting) || 15;
+			let timeTaken = 0;
+			if (g.mode === 'standard') {
+				timeTaken = g.win ? g.score : g.score || 0;
+				totalSeconds += timeTaken;
+			} else {
+				timeTaken = parseInt(g.setting) || 15;
+				totalSeconds += timeTaken;
+			}
 
-			// NEW LOGIC: Only count cells if the grid was WON
 			if (g.win) {
-				if (g.setting === '9x9') {
-					totalCellsSwept += 81;
-				} else if (g.setting === '16x16') {
-					totalCellsSwept += 256;
-				} else if (g.setting === '30x16') {
-					totalCellsSwept += 480;
-				} else if (g.setting === 'custom') {
-					// If you saved custom dimensions in the DB, use those,
-					// otherwise default to a reasonable custom average
-					totalCellsSwept += 100;
+				if (g.total_mines) {
+					minesSweptCount += g.total_mines;
+				} else {
+					if (g.setting === '9x9') minesSweptCount += 10;
+					else if (g.setting === '16x16') minesSweptCount += 40;
+					else if (g.setting === '30x16') minesSweptCount += 99;
+					else if (g.mode === 'time') minesSweptCount += g.score * 10;
+					else if (g.setting === 'custom') minesSweptCount += 10;
 				}
 			}
 
-			// Personal Bests Logic
+			if (g.win && g.total_3bv && timeTaken > 0) {
+				const bbbPerSec = parseFloat((g.total_3bv / timeTaken).toFixed(2));
+				const cat = g.setting;
+				if (best3BVs[cat] && bbbPerSec > best3BVs[cat].value) {
+					best3BVs[cat] = { value: bbbPerSec, date: g.created_at };
+				}
+			}
+
 			if (g.win) {
 				const key = `${g.mode === 'time' ? 'Time' : 'Std'} ${g.setting}`;
 				if (
@@ -136,7 +148,8 @@
 			}
 		});
 
-		stats.totalCellsCleared = totalCellsSwept; // Assign the new calculation
+		stats.totalMinesSwept = minesSweptCount;
+
 		const h = Math.floor(totalSeconds / 3600)
 			.toString()
 			.padStart(2, '0');
@@ -148,27 +161,19 @@
 		bests = Object.values(groups);
 	}
 
-	// --- HEATMAP GENERATOR ---
 	function generateHeatmap(data: any[]) {
 		const today = new Date();
 		const days = [];
-		// Generate last 365 days
-		// We want to start on a day that aligns the grid nicely, but for now strict 365 is fine
 		for (let i = 364; i >= 0; i--) {
 			const d = new Date();
 			d.setDate(today.getDate() - i);
 			const dateStr = d.toISOString().split('T')[0];
-
-			// Count games on this day
 			const count = data.filter((g) => g.created_at.startsWith(dateStr)).length;
-
-			// Calculate Intensity (0-4 scale)
 			let intensity = 0;
 			if (count > 0) intensity = 1;
 			if (count > 2) intensity = 2;
 			if (count > 5) intensity = 3;
 			if (count > 10) intensity = 4;
-
 			days.push({ date: dateStr, count, intensity });
 		}
 		heatmapData = days;
@@ -186,7 +191,7 @@
 		}
 		if (e.key === 'Tab') {
 			e.preventDefault();
-			window.location.href = '/';
+			goto('/'); // Using SvelteKit goto for smoother navigation
 		}
 		if (e.key === 'Escape') {
 			showPalette = true;
@@ -202,14 +207,20 @@
 	class="relative flex min-h-screen flex-col items-center bg-bg font-mono text-text transition-colors duration-300"
 >
 	<div
-		class="animate-in fade-in slide-in-from-top-4 mb-4 flex w-full max-w-6xl items-center justify-between p-8 duration-500"
+		class="animate-in fade-in slide-in-from-top-4 mb-0 flex w-full max-w-5xl items-center justify-between p-8 duration-500"
 	>
-		<a href="/" class="flex select-none items-center gap-2 transition-opacity hover:opacity-80">
-			<Bomb size={24} class="text-main" />
-			<h1 class="text-2xl font-bold tracking-tight text-text">
-				z<span class="text-main">sweep</span>
-			</h1>
-		</a>
+		<div class="flex items-center gap-4 transition-all duration-300">
+			<a href="/" class="group flex select-none items-center gap-3 transition-all hover:opacity-80">
+				<Bomb
+					size={28}
+					strokeWidth={2.5}
+					class="text-main transition-transform duration-300 group-hover:scale-110"
+				/>
+				<h1 class="font-mono text-3xl font-black leading-none tracking-tighter text-text">
+					z<span class="text-main">sweep</span>
+				</h1>
+			</a>
+		</div>
 
 		<div class="flex items-center gap-6 text-sm">
 			<div class="group relative z-20">
@@ -225,14 +236,6 @@
 					<div
 						class="flex min-w-[160px] flex-col rounded border border-sub/20 bg-bg p-1 font-mono text-sm shadow-xl"
 					>
-						<a
-							href="/"
-							class="flex items-center gap-2 rounded px-3 py-2 text-sub transition-colors hover:bg-sub/10 hover:text-text"
-						>
-							<ArrowLeft size={14} />
-							<span>Back to Game</span>
-						</a>
-						<div class="my-1 h-[1px] bg-sub/10"></div>
 						<button
 							on:click={handleLogout}
 							class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sub transition-colors hover:bg-error/10 hover:text-error"
@@ -249,7 +252,7 @@
 	{#if loading}
 		<div class="mt-20 animate-pulse text-sub">loading profile...</div>
 	{:else}
-		<div class="flex w-full max-w-6xl flex-col px-8 pb-32">
+		<div class="flex w-full max-w-5xl flex-col px-8 pb-32">
 			<div
 				class="animate-in fade-in mb-8 flex w-full flex-col items-stretch justify-between gap-8 rounded-lg border border-sub/10 bg-sub/5 p-8 delay-75 duration-500 md:flex-row"
 			>
@@ -291,11 +294,49 @@
 					class="flex flex-col items-end justify-center border-l border-sub/10 pl-8 text-right md:pl-16"
 				>
 					<span class="mb-2 text-xs font-bold uppercase tracking-widest text-sub">
-						estimated cells swept
+						estimated mines swept
 					</span>
 					<span class="text-7xl font-bold leading-none text-main">
-						{stats.totalCellsCleared}
+						{stats.totalMinesSwept}
 					</span>
+				</div>
+			</div>
+
+			<div class="animate-in fade-in mb-8 w-full delay-150 duration-500">
+				<div class="mb-2 flex items-center justify-between">
+					<h3 class="flex items-center gap-2 text-xs font-bold uppercase text-sub opacity-70">
+						<Zap size={14} /> Best 3BV/s
+					</h3>
+				</div>
+				<div class="mb-4 grid w-full grid-cols-4 gap-4">
+					{#each ['15', '30', '60', '120'] as time}
+						<div class="flex flex-col items-start rounded-lg border border-sub/10 bg-sub/5 p-4">
+							<div class="mb-1 text-[10px] font-bold uppercase text-sub opacity-70">
+								{time} Seconds
+							</div>
+							<div class="text-2xl font-bold leading-none text-text">
+								{best3BVs[time]?.value || '-'}
+							</div>
+							<div class="mt-1 text-[10px] text-sub opacity-50">
+								{best3BVs[time]?.value ? new Date(best3BVs[time].date).toLocaleDateString() : 'N/A'}
+							</div>
+						</div>
+					{/each}
+				</div>
+				<div class="grid w-full grid-cols-3 gap-4">
+					{#each ['9x9', '16x16', '30x16'] as size}
+						<div class="flex flex-col items-start rounded-lg border border-sub/10 bg-sub/5 p-4">
+							<div class="mb-1 text-[10px] font-bold uppercase text-sub opacity-70">
+								{size} Standard
+							</div>
+							<div class="text-2xl font-bold leading-none text-text">
+								{best3BVs[size]?.value || '-'}
+							</div>
+							<div class="mt-1 text-[10px] text-sub opacity-50">
+								{best3BVs[size]?.value ? new Date(best3BVs[size].date).toLocaleDateString() : 'N/A'}
+							</div>
+						</div>
+					{/each}
 				</div>
 			</div>
 
@@ -464,8 +505,8 @@
 			</div>
 			<div class="flex items-center gap-2">
 				<kbd
-					class="rounded bg-sub/20 px-1.5 py-0.5
-                text-text">esc</kbd
+					class="       
+        rounded bg-sub/20 px-1.5 py-0.5 text-text">esc</kbd
 				><span>- search</span>
 			</div>
 		</div>
