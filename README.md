@@ -64,7 +64,7 @@
 
 ## About The Project
 
-[![zsweep Screenshot](static/images/screenshot.png)](https://zsweep.com)
+https://github.com/user-attachments/assets/6030f51b-11f3-4d0b-ab13-0e449c9b1b93
 
 **zsweep** is a modern reimagining of Minesweeper, inspired by the "Monkeytype" aesthetic. It strips away the clutter of traditional Windows-95 clones to focus purely on speed, accuracy, and flow state.
 
