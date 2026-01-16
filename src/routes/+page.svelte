@@ -416,58 +416,57 @@
 			return;
 		}
 
+		// '}' -> Jump DOWN to next row, then scan Left->Right
 		if (e.key === '}') {
 			let jumps = mult;
 			let { r, c } = cursor;
+
 			while (jumps > 0) {
-				r++;
-				if (r >= currentSize.rows) {
-					c++;
-					r = 0;
-				}
-				let loops = 0;
-				const maxLoops = currentSize.rows * currentSize.cols;
-				while (r < currentSize.rows && c < currentSize.cols && loops < maxLoops) {
-					if (grid[r] && grid[r][c] && !grid[r][c].isOpen) break;
-					r++;
-					if (r >= currentSize.rows) {
-						c++;
-						r = 0;
+				if (r >= currentSize.rows - 1) break; // Stop at bottom boundary
+				r++; // Move down
+				
+				// Scan forward from start of this row (and subsequent rows if empty)
+				let found = false;
+				while (r < currentSize.rows) {
+					for (let i = 0; i < currentSize.cols; i++) {
+						if (grid[r] && grid[r][i] && !grid[r][i].isOpen) {
+							c = i;
+							found = true;
+							break;
+						}
 					}
-					loops++;
+					if (found) break;
+					r++; // If row is fully revealed, check the next one
 				}
 				jumps--;
 			}
-			if (r < currentSize.rows && c < currentSize.cols) cursor = { r, c };
-			vimBuffer = '';
-			return;
+			if (r < currentSize.rows) cursor = { r, c };
 		}
 
+		// For '{'
 		if (e.key === '{') {
 			let jumps = mult;
 			let { r, c } = cursor;
+
 			while (jumps > 0) {
-				r--;
-				if (r < 0) {
-					c--;
-					r = currentSize.rows - 1;
-				}
-				let loops = 0;
-				const maxLoops = currentSize.rows * currentSize.cols;
-				while (r >= 0 && c >= 0 && loops < maxLoops) {
-					if (grid[r] && grid[r][c] && !grid[r][c].isOpen) break;
-					r--;
-					if (r < 0) {
-						c--;
-						r = currentSize.rows - 1;
+				if (r <= 0) break; 
+				r--; // Move up
+				
+				let found = false;
+				while (r >= 0) {
+					for (let i = currentSize.cols - 1; i >= 0; i--) {
+						if (grid[r] && grid[r][i] && !grid[r][i].isOpen) {
+							c = i;
+							found = true;
+							break;
+						}
 					}
-					loops++;
+					if (found) break;
+					r--; 
 				}
 				jumps--;
 			}
-			if (r >= 0 && c >= 0) cursor = { r, c };
-			vimBuffer = '';
-			return;
+			if (r >= 0) cursor = { r, c };
 		}
 
 		const action = handleVimKey(e.key);
