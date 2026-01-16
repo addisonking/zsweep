@@ -40,7 +40,7 @@
 
 	$: timeObj = formatTime(data.stats.seconds);
 
-	// --- AUTH ---
+	// --- AUTHENTICATION ---
 	onMount(async () => {
 		const {
 			data: { session }
@@ -69,6 +69,27 @@
 			goto('/');
 		}
 	}
+
+	// --- CONTRIBUTORS FETCH ---
+	type Contributor = { login: string; avatar_url: string; html_url: string };
+	let contributors: Contributor[] = [];
+	const GITHUB_TOKEN = ''; // Optional token to avoid rate limits
+
+	onMount(async () => {
+		try {
+			const headers: Record<string, string> = {};
+			if (GITHUB_TOKEN) headers['Authorization'] = `token ${GITHUB_TOKEN}`;
+
+			const res = await fetch('https://api.github.com/repos/oug-t/zsweep/contributors', {
+				headers
+			});
+			if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+			contributors = await res.json();
+		} catch (err) {
+			console.error('Failed to fetch contributors', err);
+			contributors = [];
+		}
+	});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -76,9 +97,11 @@
 <div
 	class="relative flex min-h-screen flex-col items-center bg-bg p-8 font-mono text-text transition-colors duration-300"
 >
-	<div
+	<!-- HEADER / NAVIGATION --> 
+    <div
 		class="animate-in fade-in slide-in-from-top-4 mb-16 flex w-full max-w-5xl items-center justify-between duration-500"
 	>
+		<!-- Logo + Home Link --> 
 		<a
 			href="/"
 			class="group flex select-none items-center gap-3 transition-opacity hover:opacity-80"
@@ -98,8 +121,10 @@
 			</div>
 		</a>
 
+		<!-- User Auth / Profile Button --> 
 		<div class="flex items-center gap-6 text-sm">
 			{#if currentUser}
+				<!-- Logged-in User Menu -->
 				<div class="group relative z-20">
 					<button
 						class="flex items-center gap-2 rounded px-3 py-1.5 text-main transition-all hover:bg-sub/10"
@@ -107,6 +132,7 @@
 						<User size={16} />
 						<span class="font-bold">{currentUser}</span>
 					</button>
+					<!-- Dropdown for Profile / Logout --> 
 					<div
 						class="invisible absolute right-0 top-full pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100"
 					>
@@ -130,6 +156,7 @@
 					</div>
 				</div>
 			{:else}
+				<!-- Login Link --> 
 				<a
 					href="/login"
 					class="flex h-8 w-8 items-center justify-center rounded text-sub transition-colors hover:bg-sub/10 hover:text-text"
@@ -140,8 +167,11 @@
 		</div>
 	</div>
 
+	<!-- MAIN STATS SECTION --> 
 	<div class="animate-in fade-in w-full max-w-4xl duration-700">
+		<!-- Summary Stats Grid -->
 		<div class="mb-20 grid grid-cols-1 gap-12 text-center md:grid-cols-3">
+			<!-- Total Boards Started --> 
 			<div class="flex flex-col gap-1">
 				<span class="text-[10px] font-bold uppercase tracking-widest text-sub opacity-50"
 					>global boards started</span
@@ -149,6 +179,7 @@
 				<span class="text-5xl font-black text-text">{fmtCount(data.stats.started)}</span>
 			</div>
 
+			 <!-- Total Time Sweeping --> 
 			<div class="flex flex-col items-center gap-1">
 				<span class="mb-2 text-[10px] font-bold uppercase tracking-widest text-sub opacity-50"
 					>total time sweeping</span
@@ -159,6 +190,7 @@
 				</div>
 			</div>
 
+			<!-- Total Boards Cleared -->
 			<div class="flex flex-col gap-1">
 				<span class="text-[10px] font-bold uppercase tracking-widest text-sub opacity-50"
 					>global boards cleared</span
@@ -167,13 +199,20 @@
 			</div>
 		</div>
 
+		<!-- INTRODUCTION -->
 		<div class="space-y-20 text-sm leading-relaxed text-sub">
+			<p class="mb-16 max-w-2xl text-base text-sub">
+				<span class="font-bold text-main">zsweep</span> is a minimalist, keyboard-driven Minesweeper focused
+				on speed and consistency. Play using Vim-style controls, track your performance over time, and
+				see your progress visualized after each session. Clear boards efficiently, reduce mistakes, and
+				improve with practice.
+			</p>
+
+			<!-- PHILOSOPHY SECTION -->
 			<section>
 				<h2
-					class="mb-6 flex items-center gap-3 text-lg font-black uppercase tracking-tight text-text"
-				>
-					<Info size={20} class="text-main" /> The Philosophy
-				</h2>
+					class="mb-6 flex items-center gap-3 text-lg font-black uppercase tracking-tight text-text">
+					<Info size={20} class="text-main" /> The Philosophy</h2>
 				<p class="max-w-3xl text-base">
 					Traditional Minesweeper clones rely heavily on mouse inputs, breaking the <span
 						class="font-bold text-text">flow state</span
@@ -184,6 +223,7 @@
 				</p>
 			</section>
 
+			<!-- The Stack --> 
 			<section>
 				<h2
 					class="mb-6 flex items-center gap-3 text-lg font-black uppercase tracking-tight text-text"
@@ -218,6 +258,7 @@
 				</div>
 			</section>
 
+			 <!-- Vim Grammar --> 
 			<section>
 				<h2
 					class="mb-6 flex items-center gap-3 text-lg font-black uppercase tracking-tight text-text"
@@ -251,7 +292,8 @@
 					</div>
 				</div>
 			</section>
-
+			
+			<!-- OPEN SOURCE & CONTRIBUTORS --> 
 			<section class="border-t border-sub/10 pt-16">
 				<h2
 					class="mb-6 flex items-center gap-3 text-lg font-black uppercase tracking-tight text-text"
@@ -265,23 +307,54 @@
 						<strong class="text-text">Chording Animation</strong> engine.
 					</p>
 
-					<div class="my-4">
-						<span class="mb-4 block text-xs font-bold uppercase tracking-widest text-sub opacity-50"
-							>Special thanks to our contributors</span
-						>
-						<a
-							href="https://github.com/oug-t/zsweep/graphs/contributors"
-							class="inline-block transition-opacity hover:opacity-80"
-						>
-							<img
-								src="https://contrib.rocks/image?repo=oug-t/zsweep"
-								alt="Contributors"
-								class="h-12"
-							/>
-						</a>
-					</div>
-				</div>
+					<!-- Contributors Grid (dynamic from GitHub API) -->
+					<section class="mb-16">
+						<h2 class="mb-4 flex items-center gap-2 text-lg font-bold uppercase text-text">
+							<svg
+								class="h-5 w-5 text-main"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 4v16m8-8H4"
+								/>
+							</svg>
+							Contributors
+						</h2>
 
+						<p class="mb-6 text-center text-sm text-sub">
+							Every contribution, from code to ideas, helps make <span class="font-bold text-main"
+								>zsweep</span
+							> better.
+						</p>
+
+						<div
+							class="grid grid-cols-2 justify-items-center gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+						>
+							{#each contributors as c (c.login)}
+								<a
+									href={c.html_url}
+									target="_blank"
+									class="flex flex-col items-center text-xs text-sub hover:text-main"
+								>
+									<img
+  										src={c.avatar_url}
+  										alt={c.login}
+  										class="h-10 w-10 rounded-full border border-sub/20 object-cover"
+									/>
+									<span class="max-w-[60px] truncate text-center">{c.login}</span>
+								</a>
+							{/each}
+						</div>
+					</section>
+				</div>
+				
+				<!-- GitHub Links --> 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<a
 						href="https://github.com/oug-t/zsweep"
