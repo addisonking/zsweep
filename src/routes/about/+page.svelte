@@ -1,4 +1,5 @@
 <script lang="ts">
+	// --- ICON IMPORTS ---
 	import {
 		Bomb,
 		Trophy,
@@ -13,15 +14,87 @@
 		GitPullRequest,
 		Cpu
 	} from 'lucide-svelte';
-	import { currentTheme } from '$lib/themeStore';
+
+	// --- THEME / NAVIGATION ---
+	import { currentTheme } from '$lib/themeStore'; // Light/dark theme state
 	import { goto } from '$app/navigation';
+
+	// --- SVELTE / THIRD-PARTY ---
 	import { onMount } from 'svelte';
-	import { supabase } from '$lib/supabase';
-	import { injectAnalytics } from '@vercel/analytics/sveltekit';
+	import { supabase } from '$lib/supabase'; // Auth + DB
+	import { injectAnalytics } from '@vercel/analytics/sveltekit'; // Analytics
+	import Chart from 'chart.js/auto'; // Chart library for Monkeytype-style graph 
 
 	export let data;
 
+	// --- USER STATE ---
 	let currentUser: string | null = null;
+
+	// --- CHART ---
+	let chartCanvas: HTMLCanvasElement;
+	let chartInstance: Chart;
+
+	// Helper function to compute colors from the current theme store
+	const getChartColors = (theme: typeof $currentTheme) => ({
+		datasetBg: `rgba(${theme.colors.main}, 0.3)`, // Fill under the curve
+		datasetBorder: `rgb(${theme.colors.main})`, // Curve line
+		axis: `rgb(${theme.colors.text})`, // Axis labels & ticks
+		grid: `rgba(${theme.colors.text}, 0.75)` // Grid lines – more visible
+	});
+
+	// Create chart on mount
+	onMount(() => {
+		const sessions = data.stats.sessions || [];
+		const ctx = chartCanvas.getContext('2d');
+		if (!ctx) return;
+
+		if (!$currentTheme) return; // safety check
+
+		const colors = getChartColors($currentTheme);
+
+		chartInstance = new Chart(ctx, {
+			type: 'line',
+			data: {
+				labels: sessions.map((_, i) => `Session ${i + 1}`),
+				datasets: [
+					{
+						label: 'Boards cleared',
+						data: sessions.map((s) => s.completed),
+						backgroundColor: colors.datasetBg,
+						borderColor: colors.datasetBorder,
+						fill: true,
+						tension: 0.3
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				plugins: { legend: { display: false } },
+				scales: {
+					x: { ticks: { color: colors.axis }, grid: { color: colors.grid } },
+					y: { beginAtZero: true, ticks: { color: colors.axis }, grid: { color: colors.grid } }
+				}
+			}
+		});
+
+		return () => chartInstance.destroy();
+	});
+
+	// Update chart automatically when theme changes
+	$: if (chartInstance && $currentTheme) {
+		const colors = getChartColors($currentTheme);
+
+		chartInstance.data.datasets[0].backgroundColor = colors.datasetBg;
+		chartInstance.data.datasets[0].borderColor = colors.datasetBorder;
+
+		chartInstance.options.scales!.x!.ticks!.color = colors.axis;
+		chartInstance.options.scales!.x!.grid!.color = colors.grid;
+		chartInstance.options.scales!.y!.ticks!.color = colors.axis;
+		chartInstance.options.scales!.y!.grid!.color = colors.grid;
+
+		chartInstance.update();
+	}
+
 
 	// --- FORMATTING ---
 	const fmtCount = (n: number) => {
@@ -199,6 +272,11 @@
 			</div>
 		</div>
 
+		<!-- CHART -->
+		<div class="mx-auto my-6 max-w-md" style="height: 200px;">
+			<canvas bind:this={chartCanvas}></canvas>
+		</div>
+
 		<!-- INTRODUCTION -->
 		<div class="space-y-20 text-sm leading-relaxed text-sub">
 			<p class="mb-16 max-w-2xl text-base text-sub">
@@ -302,7 +380,7 @@
 				</h2>
 				<div class="mb-8 flex flex-col gap-4 text-base">
 					<p>
-						zsweep is fully open source. We are actively looking for contributors to help with
+						<strong class="text-main">zsweep</strong> is fully open source. We are actively looking for contributors to help with
 						<strong class="text-text">Mobile Support</strong> (Touch Events) and the
 						<strong class="text-text">Chording Animation</strong> engine.
 					</p>
