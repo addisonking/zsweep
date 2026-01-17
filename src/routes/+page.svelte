@@ -633,6 +633,21 @@
 		if (error) console.error('Error saving result:', error);
 	}
 
+    export const load: PageServerLoad = async ({ locals: { supabase } }) => {
+        const { data: totalSeconds, error } = await supabase
+            .rpc('get_total_sweeping_time');
+
+        if (error) {
+            console.error('Error fetching global stats:', error);
+        }
+
+        return {
+            stats: {
+            seconds: totalSeconds || 0
+        }
+    };
+};
+
 	onMount(async () => {
 		const {
 			data: { session }

@@ -23,56 +23,85 @@
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase'; // Auth + DB
 	import { injectAnalytics } from '@vercel/analytics/sveltekit'; // Analytics
-	import Chart from 'chart.js/auto'; // Chart library for Monkeytype-style graph 
+	import Chart from 'chart.js/auto'; 
 
 	export let data;
 
 	// --- USER STATE ---
 	let currentUser: string | null = null;
 
-	// --- CHART ---
+    // --- CHART ---
 	let chartCanvas: HTMLCanvasElement;
 	let chartInstance: Chart;
 
-	// Helper function to compute colors from the current theme store
-	const getChartColors = (theme: typeof $currentTheme) => ({
-		datasetBg: `rgba(${theme.colors.main}, 0.3)`, // Fill under the curve
-		datasetBorder: `rgb(${theme.colors.main})`, // Curve line
-		axis: `rgb(${theme.colors.text})`, // Axis labels & ticks
-		grid: `rgba(${theme.colors.text}, 0.75)` // Grid lines – more visible
-	});
+	const createHistogram = (dataPoints: number[], binSize = 10) => {
+		if (dataPoints.length === 0) return { labels: [], counts: [] };
 
-	// Create chart on mount
+		const min = Math.floor(Math.min(...dataPoints) / binSize) * binSize;
+		const max = Math.ceil(Math.max(...dataPoints) / binSize) * binSize;
+		
+		const bins: Record<string, number> = {};
+		for (let i = min; i < max; i += binSize) {
+			bins[`${i}-${i + binSize}`] = 0;
+		}
+
+		dataPoints.forEach(val => {
+			const bucket = Math.floor(val / binSize) * binSize;
+			const key = `${bucket}-${bucket + binSize}`;
+			if (bins[key] !== undefined) bins[key]++;
+		});
+
+		return {
+			labels: Object.keys(bins),
+			counts: Object.values(bins)
+		};
+	};
+
 	onMount(() => {
-		const sessions = data.stats.sessions || [];
 		const ctx = chartCanvas.getContext('2d');
 		if (!ctx) return;
 
-		if (!$currentTheme) return; // safety check
+		const rawData = data.stats.game_results || [];
+		
+		const validTimes = rawData
+			.filter((g: any) => g.win === true && g.mode === 'standard')
+			.map((g: any) => g.time);
 
-		const colors = getChartColors($currentTheme);
+		const { labels, counts } = createHistogram(validTimes, 10);
+
+		const mainColor = $currentTheme ? `rgb(${$currentTheme.colors.main})` : '#64b5f6';
+		const gridColor = $currentTheme ? `rgba(${$currentTheme.colors.text}, 0.1)` : '#333';
+		const textColor = $currentTheme ? `rgb(${$currentTheme.colors.sub})` : '#888';
 
 		chartInstance = new Chart(ctx, {
-			type: 'line',
+			type: 'bar',
 			data: {
-				labels: sessions.map((_, i) => `Session ${i + 1}`),
+				labels: labels,
 				datasets: [
 					{
-						label: 'Boards cleared',
-						data: sessions.map((s) => s.completed),
-						backgroundColor: colors.datasetBg,
-						borderColor: colors.datasetBorder,
-						fill: true,
-						tension: 0.3
+						label: 'Games Completed',
+						data: counts,
+						backgroundColor: mainColor,
+						borderRadius: 2,
+						barPercentage: 0.9,
+						categoryPercentage: 0.9
 					}
 				]
 			},
 			options: {
 				responsive: true,
+				maintainAspectRatio: false,
 				plugins: { legend: { display: false } },
 				scales: {
-					x: { ticks: { color: colors.axis }, grid: { color: colors.grid } },
-					y: { beginAtZero: true, ticks: { color: colors.axis }, grid: { color: colors.grid } }
+					x: { 
+						ticks: { color: textColor, font: { family: 'monospace', size: 10 } }, 
+						grid: { display: false } 
+					},
+					y: { 
+						beginAtZero: true, 
+						ticks: { color: textColor, font: { family: 'monospace', size: 10 } }, 
+						grid: { color: gridColor } 
+					}
 				}
 			}
 		});
@@ -80,21 +109,17 @@
 		return () => chartInstance.destroy();
 	});
 
-	// Update chart automatically when theme changes
 	$: if (chartInstance && $currentTheme) {
-		const colors = getChartColors($currentTheme);
+		const newColor = `rgb(${$currentTheme.colors.main})`;
+		const newGrid = `rgba(${$currentTheme.colors.text}, 0.1)`;
+		const newText = `rgb(${$currentTheme.colors.sub})`;
 
-		chartInstance.data.datasets[0].backgroundColor = colors.datasetBg;
-		chartInstance.data.datasets[0].borderColor = colors.datasetBorder;
-
-		chartInstance.options.scales!.x!.ticks!.color = colors.axis;
-		chartInstance.options.scales!.x!.grid!.color = colors.grid;
-		chartInstance.options.scales!.y!.ticks!.color = colors.axis;
-		chartInstance.options.scales!.y!.grid!.color = colors.grid;
-
+		chartInstance.data.datasets[0].backgroundColor = newColor;
+		chartInstance.options.scales!.x!.ticks!.color = newText;
+		chartInstance.options.scales!.y!.ticks!.color = newText;
+		chartInstance.options.scales!.y!.grid!.color = newGrid;
 		chartInstance.update();
 	}
-
 
 	// --- FORMATTING ---
 	const fmtCount = (n: number) => {
