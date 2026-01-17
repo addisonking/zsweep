@@ -98,21 +98,23 @@ npm
 ```
 
 ### Installation
-Clone the repo
+1. Clone the repo
 ```Bash
-git clone [https://github.com/oug-t/zsweep.git](https://github.com/oug-t/zsweep.git)
+git clone https://github.com/oug-t/zsweep
 ```
 
-Install NPM packages
+2. Install packages
 ```Bash
 npm install
 ```
 
-Setup Environment Variables Create a .env file in the root directory and add your Supabase credentials:
-```Code snippet
-PUBLIC_SUPABASE_URL=your_supabase_url
-PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-Run the development server
+3. Setup Environment Rename .env.example to .env.
+```Bash
+# If you don't have Supabase keys, the game will still run, but scores won't save.
+```
+
+5. Run the server
+```Bash
 npm run dev
 ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
