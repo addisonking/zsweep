@@ -1,5 +1,7 @@
 // src/routes/about/+page.server.ts
-export const load = async ({ locals: { supabase } }) => {
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals: { supabase }, fetch }) => {
     const { count: started } = await supabase
         .from('game_results')
         .select('*', { count: 'exact', head: true });
@@ -16,11 +18,29 @@ export const load = async ({ locals: { supabase } }) => {
         console.error('RPC Error:', rpcError);
     }
 
+    const { data: history } = await supabase
+        .from('game_results')
+        .select('time, win, mode, created_at')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+    let contributors = [];
+    try {
+        const res = await fetch('https://api.github.com/repos/oug-t/zsweep/contributors');
+        if (res.ok) {
+            contributors = await res.json();
+        }
+    } catch (e) {
+        console.error('Failed to fetch contributors', e);
+    }
+
     return {
         stats: {
             started: started || 0,
             completed: completed || 0,
-            seconds: totalSeconds || 0 
-        }
+            seconds: totalSeconds || 0,
+            game_results: history || []
+        },
+        contributors: contributors || [] // Pass this to the frontend
     };
 };

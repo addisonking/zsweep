@@ -16,7 +16,7 @@ export const load = async () => {
         stats: {
             started: started || 0,
             completed: completed || 0,
-            seconds: totalSeconds // This will now reflect the 31821 seconds (8.8 hrs)
+            seconds: totalSeconds 
         }
     };
 };
