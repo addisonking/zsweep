@@ -66,20 +66,12 @@
 
 **zsweep** is a modern reimagining of Minesweeper, inspired by the "Monkeytype" aesthetic. It strips away the clutter of traditional Windows-95 clones to focus purely on speed, accuracy, and flow state.
 
-<<<<<<< HEAD
 https://github.com/user-attachments/assets/6030f51b-11f3-4d0b-ab13-0e449c9b1b93
 
 Most Minesweeper clones are old-fashioned, click-heavy, and lack detailed stats. zsweep fixes this by providing:
 * **Keyboard-first navigation** (Tab to restart, Esc for commands).
 * **Advanced metrics** like 3BV/s (Bechtel's Board Benchmark per second).
 * **A "Time Mode"** that challenges you to solve as many grids as possible in 15/30/60 seconds. 
-=======
-Most Minesweeper clones are ugly, click-heavy, and lack detailed stats. zsweep fixes this by providing:
-
-- **Keyboard-first navigation** (Tab to restart, Esc for commands).
-- **Advanced metrics** like 3BV/s (Bechtel's Board Benchmark per second).
-- **A "Time Mode"** that challenges you to solve as many grids as possible in 15/30/60 seconds.
->>>>>>> refactor/cleanup
 
 Whether you are a competitive sweeper or just looking for a zen break, zsweep is designed to feel "just right.
 
@@ -158,12 +150,8 @@ npm run dev
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<<<<<<< HEAD
 ## Contribution
-=======
-## Contributing
 
->>>>>>> refactor/cleanup
 - We are actively looking for contributors!
 
 - Contributions are what make the open source community such an amazing place to learn, inspire, and create. Whether you are fixing a typo, optimizing the 3BV algorithm, or adding a new theme, your help is greatly appreciated.
@@ -186,17 +174,6 @@ npm run dev
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<<<<<<< HEAD
-=======
-## Contributors
-
-Thanks to these wonderful people for helping improve zsweep:
-
-- **[@flo-bit](https://github.com/flo-bit)** - Implemented the initial Chording logic (#27)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
->>>>>>> refactor/cleanup
 ## License
 
 Distributed under the AGPLv3 License.
