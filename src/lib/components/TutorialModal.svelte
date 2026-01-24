@@ -74,7 +74,9 @@
 							>
 								⚑
 							</div>
-							<div class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400">
+							<div
+								class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400"
+							>
 								1
 							</div>
 							<div
@@ -82,11 +84,15 @@
 							>
 								2
 							</div>
-							<div class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400">
+							<div
+								class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400"
+							>
 								1
 							</div>
 						</div>
-						<p class="mt-3 text-[10px] leading-tight text-sub">Mines are always next to the 1s.</p>
+						<p class="mt-3 text-[10px] leading-tight text-sub">
+							Mines are next to the 1s.
+						</p>
 					</div>
 
 					<div
@@ -114,7 +120,9 @@
 							>
 								✓
 							</div>
-							<div class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400">
+							<div
+								class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400"
+							>
 								1
 							</div>
 							<div
@@ -127,11 +135,15 @@
 							>
 								2
 							</div>
-							<div class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400">
+							<div
+								class="flex h-6 w-6 items-center justify-center text-sm font-bold text-blue-400"
+							>
 								1
 							</div>
 						</div>
-						<p class="mt-3 text-[10px] leading-tight text-sub">Mines are between the 2s.</p>
+						<p class="mt-3 text-[10px] leading-tight text-sub">
+							Mines are between the 2s.
+						</p>
 					</div>
 
 					<div
@@ -159,7 +171,9 @@
 							>
 								✓
 							</div>
-							<div class="flex h-6 w-6 items-center justify-center text-sm font-bold text-red-400">
+							<div
+								class="flex h-6 w-6 items-center justify-center text-sm font-bold text-red-400"
+							>
 								3
 							</div>
 							<div
@@ -169,8 +183,8 @@
 							</div>
 						</div>
 						<p class="mt-3 text-[10px] leading-tight text-sub">
-							If a <span class="font-bold text-red-400">3</span> touches only 3 hidden squares, they
-							are <span class="font-bold text-error">ALL</span> mines.
+							If a <span class="font-bold text-red-400">3</span> touches 3 hidden
+							squares, they are <span class="font-bold text-error">ALL</span> mines.
 						</p>
 					</div>
 				</div>
@@ -202,7 +216,9 @@
 					</a>
 				</div>
 
-				<div class="text-right text-[10px] font-bold uppercase tracking-widest text-sub opacity-40">
+				<div
+					class="text-right text-[10px] font-bold uppercase tracking-widest text-sub opacity-40"
+				>
 					Press any key
 				</div>
 			</div>
