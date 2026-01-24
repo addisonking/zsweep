@@ -19,7 +19,6 @@
 		revealCell,
 		DIRECTIONS,
 		type Cell,
-		calculate3BV,
 		revealCellsAround,
 		countFlagsAround
 	} from '$lib/minesweeper';
@@ -81,8 +80,6 @@
 		clicks: 0,
 		clicksThisSecond: 0,
 		history: [] as number[],
-		session3BV: 0,
-		currentGrid3BV: 0,
 		isWin: false,
 		gridsSolved: 0,
 		gridsPlayed: 0,
@@ -108,7 +105,6 @@
 		if (game.mode === 'standard') {
 			const r = Math.max(5, Math.min(50, config.rows));
 			const c = Math.max(5, Math.min(50, config.cols));
-			// Max mines is 85% of grid
 			const maxMines = Math.floor(r * c * 0.85);
 			const m = Math.max(1, Math.min(maxMines, config.mines));
 
@@ -152,7 +148,6 @@
 		stats.sessionErrors = 0;
 		stats.finalAccuracy = 0;
 		stats.isWin = false;
-		stats.session3BV = 0;
 		stats.history = [];
 		stats.clicksThisSecond = 0;
 
@@ -224,13 +219,10 @@
 			game.isFirstClick = false;
 			if (game.state === 'pending') startSession();
 			placeMines(game.grid, game.size.mines, { r, c });
-			stats.currentGrid3BV = calculate3BV(game.grid);
-			if (game.mode === 'standard') stats.session3BV = stats.currentGrid3BV;
 		}
 
 		const canChord =
-			game.grid[r][c].isOpen &&
-			countFlagsAround(game.grid, r, c) === game.grid[r][c].neighborCount;
+			game.grid[r][c].isOpen && countFlagsAround(game.grid, r, c) === game.grid[r][c].neighborCount;
 
 		const result = canChord ? revealCellsAround(game.grid, r, c) : revealCell(game.grid, r, c);
 
@@ -265,11 +257,7 @@
 			DIRECTIONS.forEach(([dr, dc]) => {
 				const nr = r + dr,
 					nc = c + dc;
-				if (
-					game.grid[nr]?.[nc] &&
-					!game.grid[nr][nc].isOpen &&
-					!game.grid[nr][nc].isFlagged
-				) {
+				if (game.grid[nr]?.[nc] && !game.grid[nr][nc].isOpen && !game.grid[nr][nc].isFlagged) {
 					handleClick(nr, nc);
 				}
 			});
@@ -363,8 +351,7 @@
 				return;
 			}
 			if (action.type === 'PREV_MATCH' && search.matches.length > 0) {
-				search.matchIndex =
-					(search.matchIndex - 1 + search.matches.length) % search.matches.length;
+				search.matchIndex = (search.matchIndex - 1 + search.matches.length) % search.matches.length;
 				input.cursor = search.matches[search.matchIndex];
 				return;
 			}
@@ -465,9 +452,7 @@
 		if (stats.sessionTotalMines === 0) return 0;
 		return Math.max(
 			0,
-			Math.round(
-				((stats.sessionTotalMines - stats.sessionErrors) / stats.sessionTotalMines) * 100
-			)
+			Math.round(((stats.sessionTotalMines - stats.sessionErrors) / stats.sessionTotalMines) * 100)
 		);
 	}
 
@@ -478,7 +463,6 @@
 			if (game.mode === 'time') {
 				stats.gridsSolved++;
 				stats.gridsPlayed++;
-				stats.session3BV += stats.currentGrid3BV;
 				stats.cellsRevealed += totalSafe;
 				stats.sessionTotalMines += game.size.mines;
 				stats.sessionErrors += countWrongFlags();
@@ -550,42 +534,6 @@
 
 <svelte:head>
 	<title>Zsweep</title>
-	<meta name="theme-color" content="#323437" />
-	<meta
-		name="description"
-		content="Play Zsweep, a fast-paced, keyboard-centric Minesweeper game inspired by Monkeytype. Track stats, use Vim motions, and enjoy a distraction-free experience."
-	/>
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://zsweep.com/" />
-	<meta property="og:title" content="Zsweep | Modern Minesweeper" />
-	<meta
-		property="og:description"
-		content="A fast, keyboard-centric Minesweeper game inspired by Monkeytype."
-	/>
-	<meta property="og:image" content="https://zsweep.com/og-image.png" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Zsweep" />
-	<meta name="twitter:description" content="Minimalist Minesweeper. No ads. Just speed." />
-	<meta name="twitter:image" content="https://zsweep.com/og-image.png" />
-
-	<script type="application/ld+json">
-		{
-			"@context": "https://schema.org",
-			"@type": "VideoGame",
-			"name": "Zsweep",
-			"url": "https://zsweep.com",
-			"description": "A modern, minimalist minesweeper game inspired by Monkeytype.",
-			"genre": "Puzzle",
-			"playMode": "SinglePlayer",
-			"applicationCategory": "Game",
-			"operatingSystem": "Web Browser",
-			"offers": {
-				"@type": "Offer",
-				"price": "0",
-				"priceCurrency": "USD"
-			}
-		}
-	</script>
 </svelte:head>
 
 <svelte:window on:keydown={handleInput} on:mouseup={() => (input.isMouseDown = false)} />
@@ -599,16 +547,14 @@
 		<div class="flex items-center gap-4 transition-all duration-300">
 			<a
 				href="{base}/"
-				class="group flex select-none items-center gap-3 transition-all {game.state ===
-				'playing'
+				class="group flex select-none items-center gap-3 transition-all {game.state === 'playing'
 					? 'pointer-events-none opacity-50 grayscale'
 					: 'hover:opacity-80'}"
 			>
 				<Bomb
 					size={28}
 					strokeWidth={2.5}
-					class="transition-transform duration-300 group-hover:scale-110 {game.state ===
-					'playing'
+					class="transition-transform duration-300 group-hover:scale-110 {game.state === 'playing'
 						? 'text-sub'
 						: 'text-main'}"
 				/>
@@ -619,8 +565,7 @@
 
 			<a
 				href="{base}/about"
-				class="text-sub transition-all duration-300 hover:text-text {game.state ===
-				'playing'
+				class="text-sub transition-all duration-300 hover:text-text {game.state === 'playing'
 					? 'pointer-events-none opacity-0'
 					: 'opacity-100'}"
 				title="About"
@@ -688,7 +633,7 @@
 			gridsSolved={stats.gridsSolved}
 			gridsPlayed={stats.gridsPlayed}
 			mode={game.mode}
-			total3BV={stats.session3BV}
+			totalMines={stats.sessionTotalMines}
 			totalGlobalSeconds={data?.stats?.seconds || 0}
 			on:restart={fullReset}
 		/>
@@ -735,9 +680,7 @@
 					<Hourglass size={12} class="text-sub opacity-50" />
 					{#each GAME_CONFIG.timeLimits as t}
 						<button
-							class={game.timeLimit === t
-								? 'font-bold text-main'
-								: 'text-sub hover:text-text'}
+							class={game.timeLimit === t ? 'font-bold text-main' : 'text-sub hover:text-text'}
 							on:click={() => setTime(t)}>{t}s</button
 						>
 					{/each}

@@ -18,11 +18,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	);
 
-	const {
-		data: { user }
-	} = await event.locals.supabase.auth.getUser();
-
-	event.locals.user = user;
+	event.locals.getSession = async () => {
+		const {
+			data: { session }
+		} = await event.locals.supabase.auth.getSession();
+		return session;
+	};
 
 	return resolve(event, {
 		filterSerializedResponseHeaders(name) {

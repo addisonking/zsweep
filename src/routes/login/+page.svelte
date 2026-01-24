@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { User, Check, Bomb } from 'lucide-svelte';
+	import { goto } from '$app/navigation';
 	import { supabase } from '$lib/supabase';
 
 	type AuthProvider = 'google' | 'github';
@@ -40,7 +41,7 @@
 
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider,
-			options: { redirectTo: window.location.origin }
+			options: { redirectTo: '${window.location.origin}/auth/callback' }
 		});
 
 		if (error) errorMsg = error.message;
@@ -63,7 +64,7 @@
 			errorMsg = error.message;
 			loading = false;
 		} else {
-			window.location.href = '/';
+			goto('/profile');
 		}
 	}
 

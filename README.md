@@ -69,9 +69,10 @@
 https://github.com/user-attachments/assets/6030f51b-11f3-4d0b-ab13-0e449c9b1b93
 
 Most Minesweeper clones are old-fashioned, click-heavy, and lack detailed stats. zsweep fixes this by providing:
-* **Keyboard-first navigation** (Tab to restart, Esc for commands).
-* **Advanced metrics** like 3BV/s (Bechtel's Board Benchmark per second).
-* **A "Time Mode"** that challenges you to solve as many grids as possible in 15/30/60 seconds. 
+
+- **Keyboard-first navigation** (Tab to restart, Esc for commands).
+- **Advanced metrics** like 3BV/s (Bechtel's Board Benchmark per second).
+- **A "Time Mode"** that challenges you to solve as many grids as possible in 15/30/60 seconds.
 
 Whether you are a competitive sweeper or just looking for a zen break, zsweep is designed to feel "just right.
 

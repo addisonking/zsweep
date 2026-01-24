@@ -7,7 +7,7 @@
 
 	export let win = false;
 	export let time = 0;
-	export let total3BV = 0;
+	export let totalMines = 0;
 	export let totalClicks = 0;
 	export let history: number[] = [];
 	export let accuracy = 0;
@@ -21,8 +21,7 @@
 	let chartCanvas: HTMLCanvasElement;
 	let chartInstance: Chart | null = null;
 
-	$: bbbPerSecond = (total3BV / Math.max(time, 1)).toFixed(2);
-	$: efficiency = totalClicks > 0 ? Math.round((total3BV / totalClicks) * 100) : 0;
+	$: minesPerMin = totalMines > 0 ? ((totalMines / Math.max(time, 1)) * 60).toFixed(1) : '0.0';
 
 	$: consistency = (() => {
 		if (!history?.length) return 0;
@@ -71,7 +70,19 @@
 	{#if !win}
 		<div class="flex flex-col items-center gap-6 text-error">
 			<Skull size={64} class="animate-bounce" />
-			<h1 class="text-4xl font-bold uppercase tracking-widest">Explosion</h1>
+			<div class="relative">
+				<h1
+					class="absolute left-1 top-1 select-none text-8xl font-black uppercase italic tracking-tighter text-red-900 opacity-50 blur-sm"
+				>
+					BOOM
+				</h1>
+
+				<h1
+					class="boom-text relative select-none text-8xl font-black uppercase italic tracking-tighter"
+				>
+					BOOM
+				</h1>
+			</div>
 			<p class="font-mono text-sub">Run ended.</p>
 		</div>
 
@@ -96,8 +107,12 @@
 		<div class="grid w-full max-w-4xl grid-cols-[auto_1fr] items-center gap-12">
 			<div class="flex min-w-[120px] flex-col gap-6">
 				<div>
-					<span class="mb-1 block text-2xl font-bold leading-none text-sub opacity-50">3bv/s</span>
-					<span class="block text-[64px] font-bold leading-[0.8] text-main">{bbbPerSecond}</span>
+					<span class="mb-1 block text-2xl font-bold leading-none text-sub opacity-50"
+						>{mode === 'time' ? 'grid(s)' : 'mines/min'}</span
+					>
+					<span class="block text-[64px] font-bold leading-[0.8] text-main"
+						>{mode === 'time' ? gridsSolved : minesPerMin}</span
+					>
 				</div>
 				<div>
 					<span class="mb-1 block text-2xl font-bold leading-none text-sub opacity-50">acc</span>
@@ -118,12 +133,12 @@
 				<span class="text-sm leading-tight text-main">{sizeLabel}</span>
 			</div>
 			<div class="flex flex-col">
-				<span class="mb-1 text-xs font-bold text-sub opacity-50">3bv</span>
-				<span class="text-2xl font-bold text-text">{total3BV}</span>
+				<span class="mb-1 text-xs font-bold text-sub opacity-50">mines</span>
+				<span class="text-2xl font-bold text-text">{totalMines}</span>
 			</div>
 			<div class="flex flex-col">
-				<span class="mb-1 text-xs font-bold text-sub opacity-50">efficiency</span>
-				<span class="text-2xl font-bold text-text">{efficiency}%</span>
+				<span class="mb-1 text-xs font-bold text-sub opacity-50">clicks</span>
+				<span class="text-2xl font-bold text-text">{totalClicks}</span>
 			</div>
 			<div class="flex flex-col">
 				<span class="mb-1 text-xs font-bold text-sub opacity-50">consistency</span>
@@ -170,5 +185,46 @@
 	}
 	.animate-shake {
 		animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+	}
+
+	.glitch-text {
+		position: relative;
+		text-shadow:
+			2px 0 #0ff,
+			-2px 0 #f00;
+		animation: glitch-skew 1s infinite linear alternate-reverse;
+	}
+
+	@keyframes glitch-skew {
+		0% {
+			text-shadow:
+				2px 0 #ff0000,
+				-2px 0 #00ffff;
+			transform: skew(0deg);
+		}
+		20% {
+			text-shadow:
+				2px 0 #ff0000,
+				-2px 0 #00ffff;
+			transform: skew(0deg);
+		}
+		21% {
+			text-shadow:
+				-2px 0 #ff0000,
+				2px 0 #00ffff;
+			transform: skew(-10deg);
+		}
+		22% {
+			text-shadow:
+				2px 0 #ff0000,
+				-2px 0 #00ffff;
+			transform: skew(0deg);
+		}
+		100% {
+			text-shadow:
+				2px 0 #ff0000,
+				-2px 0 #00ffff;
+			transform: skew(0deg);
+		}
 	}
 </style>

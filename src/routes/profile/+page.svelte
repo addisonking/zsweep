@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { supabase } from '$lib/supabase';
 	import {
 		User,
@@ -18,7 +19,26 @@
 	import { currentTheme } from '$lib/themeStore';
 	import { THEMES } from '$lib/themes';
 
-	const safeNum = (val: any) => {
+	interface Profile {
+		id: string;
+		username: string;
+		avatar_url: string;
+		created_at: string;
+	}
+
+	interface GameResult {
+		id: string;
+		mode: string;
+		setting: string;
+		win: boolean;
+		time: number;
+		grids?: number;
+		total_mines?: number;
+		accuracy: number;
+		created_at: string;
+	}
+
+	const safeNum = (val: unknown) => {
 		if (val === null || val === undefined) return 0;
 		const n = Number(val);
 		return isNaN(n) ? 0 : n;
@@ -33,11 +53,17 @@
 	};
 
 	let dataState = {
-		profile: null as any,
-		history: [] as any[],
+		profile: null as Profile | null,
+		history: [] as GameResult[],
 		currentUser: null as string | null,
-		bests: [] as any[],
-		best3BVs: {} as Record<string, { value: number; date: string }>,
+		bests: [] as {
+			label: string;
+			score: number;
+			acc: number;
+			mode: string;
+			date: string;
+		}[],
+		bestMinesPerMin: {} as Record<string, { value: number; date: string }>,
 		heatmapData: [] as { date: string; count: number; intensity: number }[]
 	};
 
@@ -70,7 +96,7 @@
 		c.label.toLowerCase().includes(ui.searchQuery.toLowerCase())
 	);
 
-	function calculateStats(data: any[]) {
+	function calculateStats(data: GameResult[]) {
 		const newStats = {
 			started: data.length,
 			completed: data.filter((g) => g.win).length,
@@ -84,32 +110,38 @@
 
 		let totalSeconds = 0;
 		let minesSweptCount = 0;
+
 		const groups: Record<string, any> = {};
-		const categories = ['15', '30', '60', '120', '9x9', '16x16', '30x16'];
-		categories.forEach((c) => (dataState.best3BVs[c] = { value: 0, date: '' }));
+		const calculatedBests: Record<string, { value: number; date: string }> = {};
+
+		const standardCategories = ['15', '30', '60', '120', '9x9', '16x16', '30x16'];
+		standardCategories.forEach((c) => (calculatedBests[c] = { value: 0, date: '' }));
 
 		data.forEach((g) => {
-			let timeTaken = safeNum(g.time ?? (g.mode === 'time' ? parseInt(g.setting) || 15 : 0));
+			let timeTaken = safeNum(g.time || (g.mode === 'time' ? parseInt(g.setting) || 15 : 0));
 			totalSeconds += timeTaken;
 
+			let mines = safeNum(g.total_mines);
+			if (mines === 0) {
+				const lookup: Record<string, number> = { '9x9': 10, '16x16': 40, '30x16': 99 };
+				mines = g.mode === 'standard' ? lookup[g.setting] || 10 : safeNum(g.grids) * 10;
+			}
+
 			if (g.win) {
-				let mines = safeNum(g.total_mines);
-				if (mines === 0) {
-					const lookup: Record<string, number> = { '9x9': 10, '16x16': 40, '30x16': 99 };
-					mines = g.mode === 'standard' ? lookup[g.setting] || 10 : safeNum(g.grids) * 10;
-				}
 				minesSweptCount += mines;
-			}
 
-			if (g.win && g.total_3bv && timeTaken > 0) {
-				const bbbPerSec = parseFloat((g.total_3bv / timeTaken).toFixed(2));
-				const cat = g.setting;
-				if (dataState.best3BVs[cat] && bbbPerSec > dataState.best3BVs[cat].value) {
-					dataState.best3BVs[cat] = { value: bbbPerSec, date: g.created_at };
+				if (timeTaken > 0) {
+					const minesPerMin = parseFloat(((mines / timeTaken) * 60).toFixed(1));
+					const cat = g.setting;
+
+					if (!calculatedBests[cat] || minesPerMin > calculatedBests[cat].value) {
+						calculatedBests[cat] = {
+							value: minesPerMin,
+							date: g.created_at
+						};
+					}
 				}
-			}
 
-			if (g.win) {
 				const key = `${g.mode === 'time' ? 'Time' : 'Std'} ${g.setting}`;
 				const scoreValue = g.mode === 'time' ? safeNum(g.grids) : safeNum(g.time) || 9999;
 
@@ -129,6 +161,7 @@
 		});
 
 		newStats.totalMinesSwept = minesSweptCount;
+
 		const safeTotal = safeNum(totalSeconds);
 		const h = Math.floor(safeTotal / 3600)
 			.toString()
@@ -139,11 +172,14 @@
 		const s = (safeTotal % 60).toString().padStart(2, '0');
 		newStats.timeSweeping = `${h}:${m}:${s}`;
 
-		dataState.bests = Object.values(groups);
-		return newStats;
+		return {
+			stats: newStats,
+			bests: Object.values(groups),
+			bestMinesPerMin: calculatedBests
+		};
 	}
 
-	function generateHeatmap(data: any[]) {
+	function generateHeatmap(data: GameResult[]) {
 		const today = new Date();
 		const days = [];
 		for (let i = 364; i >= 0; i--) {
@@ -157,33 +193,70 @@
 		dataState.heatmapData = days;
 	}
 
-	onMount(async () => {
-		const {
-			data: { user }
-		} = await supabase.auth.getUser();
-		if (!user) return goto('/login');
+	onMount(() => {
+		let cancelled = false;
 
-		const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-		dataState.profile = p;
-		dataState.currentUser = p?.username;
+		(async () => {
+			try {
+				const { data: authData, error: authErr } = await supabase.auth.getUser();
+				if (authErr) throw authErr;
 
-		const { data: r } = await supabase
-			.from('game_results')
-			.select('*')
-			.eq('user_id', user.id)
-			.order('created_at', { ascending: false });
+				const user = authData?.user;
+				if (!user) {
+					goto(`${base}/login`);
+					return;
+				}
 
-		if (r) {
-			dataState.history = r;
-			stats = calculateStats(r);
-			generateHeatmap(r);
-		}
-		ui.loading = false;
+				const { data: p, error: pErr } = await supabase
+					.from('profiles')
+					.select('*')
+					.eq('id', user.id)
+					.single();
+
+				if (pErr) throw pErr;
+
+				const { data: r, error: rErr } = await supabase
+					.from('game_results')
+					.select('*')
+					.eq('user_id', user.id)
+					.order('created_at', { ascending: false });
+
+				if (rErr) throw rErr;
+
+				dataState.profile = p;
+				dataState.currentUser = p?.username;
+
+				if (r && r.length > 0) {
+					dataState.history = r;
+
+					const calculated = calculateStats(r);
+					stats = calculated.stats;
+					dataState.bests = calculated.bests;
+					dataState.bestMinesPerMin = calculated.bestMinesPerMin;
+
+					generateHeatmap(r);
+				} else {
+					dataState.history = [];
+				}
+
+				if (cancelled) return;
+			} catch (err) {
+				console.error('onMount load failed:', err);
+			} finally {
+				if (!cancelled) {
+					ui.loading = false;
+				}
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
 	});
 
 	async function handleLogout() {
 		await supabase.auth.signOut();
-		window.location.href = '/login';
+		window.location.href = `${base}/login`;
 	}
 
 	function handleInput(e: KeyboardEvent) {
@@ -193,7 +266,7 @@
 		}
 		if (e.key === 'Tab') {
 			e.preventDefault();
-			goto('/');
+			goto(`${base}/`);
 		}
 		if (e.key === 'Escape') {
 			ui.showPalette = true;
@@ -212,7 +285,10 @@
 		class="animate-in fade-in slide-in-from-top-4 mb-0 flex w-full max-w-5xl items-center justify-between p-8 duration-500"
 	>
 		<div class="flex items-center gap-4 transition-all duration-300">
-			<a href="/" class="group flex select-none items-center gap-3 transition-all hover:opacity-80">
+			<a
+				href="{base}/"
+				class="group flex select-none items-center gap-3 transition-all hover:opacity-80"
+			>
 				<Bomb
 					size={28}
 					strokeWidth={2.5}
@@ -312,72 +388,24 @@
 
 			<div class="animate-in fade-in mb-8 w-full delay-150 duration-500">
 				<h3 class="mb-2 flex items-center gap-2 text-xs font-bold uppercase text-sub opacity-70">
-					<Zap size={14} /> Best 3BV/s
+					<Zap size={14} /> Best Mines/min
 				</h3>
-				<div class="mb-4 grid w-full grid-cols-4 gap-4">
-					{#each ['15', '30', '60', '120'] as time}
-						<div class="flex flex-col items-start rounded-lg border border-sub/10 bg-sub/5 p-4">
-							<div class="mb-1 text-[10px] font-bold uppercase text-sub opacity-70">
-								{time} Seconds
-							</div>
-							<div class="text-2xl font-bold leading-none text-text">
-								{dataState.best3BVs[time]?.value || '-'}
-							</div>
-							<div class="mt-1 text-[10px] text-sub opacity-50">
-								{dataState.best3BVs[time]?.value
-									? new Date(dataState.best3BVs[time].date).toLocaleDateString()
-									: 'N/A'}
-							</div>
-						</div>
-					{/each}
-				</div>
 				<div class="grid w-full grid-cols-3 gap-4">
-					{#each ['9x9', '16x16', '30x16'] as size}
+					{#each ['9x9', '16x16', '30x16'] as size (size)}
 						<div class="flex flex-col items-start rounded-lg border border-sub/10 bg-sub/5 p-4">
 							<div class="mb-1 text-[10px] font-bold uppercase text-sub opacity-70">
 								{size} Standard
 							</div>
 							<div class="text-2xl font-bold leading-none text-text">
-								{dataState.best3BVs[size]?.value || '-'}
+								{dataState.bestMinesPerMin[size]?.value || '-'}
 							</div>
 							<div class="mt-1 text-[10px] text-sub opacity-50">
-								{dataState.best3BVs[size]?.value
-									? new Date(dataState.best3BVs[size].date).toLocaleDateString()
+								{dataState.bestMinesPerMin[size]?.date
+									? new Date(dataState.bestMinesPerMin[size].date).toLocaleDateString()
 									: 'N/A'}
 							</div>
 						</div>
 					{/each}
-				</div>
-			</div>
-
-			<div class="animate-in fade-in mb-8 w-full delay-150 duration-500">
-				<h3 class="mb-2 flex items-center gap-2 text-xs font-bold uppercase text-sub opacity-70">
-					<Trophy size={14} /> Personal Bests
-				</h3>
-				<div
-					class="grid w-full grid-cols-2 gap-4 rounded-lg border border-sub/10 bg-sub/5 p-4 md:grid-cols-4"
-				>
-					{#if dataState.bests.length > 0}
-						{#each dataState.bests.slice(0, 4) as item}
-							<div
-								class="flex flex-col items-center border-r border-sub/10 p-2 last:border-0 md:items-start"
-							>
-								<div class="mb-1 text-[10px] font-bold uppercase text-sub opacity-70">
-									{item.label}
-								</div>
-								<div class="mb-1 text-3xl font-bold leading-none text-text">
-									{item.score}
-								</div>
-								<div class="text-[10px] font-medium text-main">
-									{item.acc}% accuracy
-								</div>
-							</div>
-						{/each}
-					{:else}
-						<div class="col-span-4 py-4 text-center text-xs italic text-sub opacity-50">
-							No personal bests yet.
-						</div>
-					{/if}
 				</div>
 			</div>
 
@@ -393,7 +421,7 @@
 					</div>
 					<div class="flex items-center gap-1 text-[10px] text-sub">
 						<span>less</span>
-						{#each [0.1, 0.25, 0.5, 0.8, 1] as op}
+						{#each [0.1, 0.25, 0.5, 0.8, 1] as op (op)}
 							<div
 								class="h-2 w-2 rounded-sm"
 								style="background-color: rgba(var(--main) / {op})"
@@ -406,9 +434,9 @@
 				<div
 					class="scrollbar-hide ml-8 flex gap-[3px] overflow-x-auto rounded-lg border border-sub/10 bg-sub/5 p-6"
 				>
-					{#each Array(53) as _, w}
+					{#each Array(53), w (w)}
 						<div class="flex flex-col gap-[3px]">
-							{#each Array(7) as _, d}
+							{#each Array(7), d (d)}
 								{@const day = dataState.heatmapData[w * 7 + d]}
 								{#if day}
 									<div
@@ -451,7 +479,7 @@
 							>
 						</thead>
 						<tbody class="divide-y divide-sub/5 text-xs">
-							{#each dataState.history.slice(0, 10) as row}
+							{#each dataState.history.slice(0, 10) as row (row.id)}
 								<tr class="transition-colors hover:bg-sub/5">
 									<td class="flex items-center gap-2 p-4 font-bold text-text"
 										><Activity size={12} class="text-sub opacity-50" />{row.mode}</td
@@ -501,7 +529,7 @@
 				</div>
 				<div class="overflow-y-auto p-1.5">
 					{#if ui.paletteView === 'root'}
-						{#each filteredCommands as cmd}
+						{#each filteredCommands as cmd (cmd.id)}
 							<button
 								class="group flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-sub/10"
 								on:click={cmd.action}
@@ -517,7 +545,7 @@
 							</button>
 						{/each}
 					{:else if ui.paletteView === 'themes'}
-						{#each filteredThemes as theme}
+						{#each filteredThemes as theme (theme.name)}
 							<button
 								class="group flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs hover:bg-sub/10"
 								on:click={() => {
