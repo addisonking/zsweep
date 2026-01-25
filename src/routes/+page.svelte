@@ -4,14 +4,13 @@
 	import {
 		Grid3x3,
 		Wrench,
-		User,
-		LogOut,
 		Hourglass,
 		Infinity as InfinityIcon,
-		Palette,
-		Info,
-		Bomb,
-		BookOpen
+		Mail,
+		Github,
+		Twitter,
+		Code,
+		Heart
 	} from 'lucide-svelte';
 	import {
 		createGrid,
@@ -680,4 +679,45 @@
 			</div>
 		</div>
 	{/if}
+
+	<footer
+		class="mt-auto flex w-full flex-col items-center gap-6 pb-32 pt-20 text-xs text-sub transition-colors duration-300"
+	>
+		<div class="flex flex-wrap justify-center gap-8 opacity-60">
+			<a
+				href="mailto:tommyguo024@outlook.com"
+				class="flex items-center gap-2 transition-colors hover:text-text"
+			>
+				<Mail size={14} />
+				<span>contact</span>
+			</a>
+
+			<a
+				href="https://github.com/oug-t/zsweep"
+				target="_blank"
+				rel="noreferrer"
+				class="flex items-center gap-2 transition-colors hover:text-text"
+			>
+				<Github size={14} />
+				<span>github</span>
+			</a>
+
+			<a
+				href="https://x.com/ougoot"
+				target="_blank"
+				rel="noreferrer"
+				class="flex items-center gap-2 transition-colors hover:text-text"
+			>
+				<Twitter size={14} />
+				<span>twitter</span>
+			</a>
+		</div>
+
+		<div class="flex items-center gap-2 opacity-40">
+			<Code size={12} />
+			<span>with</span>
+			<Heart size={12} class="text-error" />
+			<span>by oug-t</span>
+		</div>
+	</footer>
 </div>
