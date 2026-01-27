@@ -1,5 +1,8 @@
 import type { Cell } from '$lib/minesweeper';
 
+/**
+ * Represents the distinct actions a Vim command can trigger.
+ */
 export type VimAction =
 	| { type: 'MOVE_CURSOR'; dx: number; dy: number }
 	| { type: 'REVEAL' }
@@ -17,6 +20,10 @@ export type VimAction =
 	| { type: 'PREV_MATCH' }
 	| null;
 
+/**
+ * Maps a key press to a specific Vim action or motion.
+ * @param key - The keyboard event key value.
+ */
 export function handleVimKey(key: string): VimAction {
 	if (/^[1-9]$/.test(key)) return { type: 'DIGIT', value: key };
 
@@ -46,6 +53,13 @@ export function handleVimKey(key: string): VimAction {
 		case 'ArrowRight':
 			return { type: 'MOVE_CURSOR', dx: 1, dy: 0 };
 
+		case '$':
+			return { type: 'MOVE_CURSOR', dx: 999, dy: 0 };
+		case 'G':
+			return { type: 'GO_BOTTOM' };
+		case 'g':
+			return { type: 'GO_TOP' };
+
 		case 'w':
 			return { type: 'NEXT_UNREVEALED' };
 		case 'b':
@@ -59,21 +73,14 @@ export function handleVimKey(key: string): VimAction {
 		case 'f':
 			return { type: 'FLAG' };
 
-		case '$':
-			return { type: 'MOVE_CURSOR', dx: 999, dy: 0 };
-		case 'G':
-			return { type: 'GO_BOTTOM' };
-		case 'g':
-			return { type: 'GO_TOP' };
-
 		default:
 			return null;
 	}
 }
 
 /**
- * Calculates the destination of complex Vim motions (w, b, }, {)
- * which depend on the grid state (finding the next unrevealed cell).
+ * Calculates the destination coordinates for Vim motions.
+ * Handles simple directions (for operators) and complex state-dependent jumps.
  */
 export function calculateVimJump(
 	key: string,
@@ -84,101 +91,84 @@ export function calculateVimJump(
 	cols: number
 ): { r: number; c: number } | null {
 	let { r, c } = cursor;
-	let jumps = multiplier;
 
-	// 'w' -> Jump forward to next unrevealed cell
+	// Simple Directions
+	if (key === 'h' || key === 'ArrowLeft') return { r, c: Math.max(0, c - multiplier) };
+	if (key === 'l' || key === 'ArrowRight') return { r, c: Math.min(cols - 1, c + multiplier) };
+	if (key === 'k' || key === 'ArrowUp') return { r: Math.max(0, r - multiplier), c };
+	if (key === 'j' || key === 'ArrowDown') return { r: Math.min(rows - 1, r + multiplier), c };
+
+	// Line Boundaries
+	if (key === '0') return { r, c: 0 };
+	if (key === '$') return { r, c: cols - 1 };
+	if (key === 'g') return { r: 0, c };
+	if (key === 'G') {
+		const target = multiplier > 1 ? Math.min(rows - 1, multiplier - 1) : rows - 1;
+		return { r: target, c };
+	}
+
+	// Complex Motions
+
+	// 'w': Jump forward to next unrevealed cell
 	if (key === 'w') {
-		while (jumps > 0) {
-			c++;
-			if (c >= cols) {
-				c = 0;
-				r++;
-			}
-			let loops = 0;
-			const maxLoops = rows * cols;
-			// Scan until we find a closed cell or hit the end
-			while (r < rows && loops < maxLoops) {
-				if (grid[r]?.[c] && !grid[r][c].isOpen) break;
-				c++;
-				if (c >= cols) {
-					c = 0;
-					r++;
-				}
-				loops++;
-			}
-			jumps--;
+		let index = r * cols + c;
+		const total = rows * cols;
+		for (let i = 0; i < multiplier; i++) {
+			let scanned = 0;
+			do {
+				index = (index + 1) % total;
+				scanned++;
+			} while (scanned < total && grid[Math.floor(index / cols)][index % cols].isOpen);
 		}
-		if (r < rows) return { r, c };
+		return { r: Math.floor(index / cols), c: index % cols };
 	}
 
-	// 'b' -> Jump backward to previous unrevealed cell
+	// 'b': Jump backward to previous unrevealed cell
 	if (key === 'b') {
-		while (jumps > 0) {
-			c--;
-			if (c < 0) {
-				c = cols - 1;
-				r--;
-			}
-			let loops = 0;
-			const maxLoops = rows * cols;
-			while (r >= 0 && loops < maxLoops) {
-				if (grid[r]?.[c] && !grid[r][c].isOpen) break;
-				c--;
-				if (c < 0) {
-					c = cols - 1;
-					r--;
-				}
-				loops++;
-			}
-			jumps--;
+		let index = r * cols + c;
+		const total = rows * cols;
+		for (let i = 0; i < multiplier; i++) {
+			let scanned = 0;
+			do {
+				index = (index - 1 + total) % total;
+				scanned++;
+			} while (scanned < total && grid[Math.floor(index / cols)][index % cols].isOpen);
 		}
-		if (r >= 0) return { r, c };
+		return { r: Math.floor(index / cols), c: index % cols };
 	}
 
-	// '}' -> Jump DOWN to next row that has unrevealed cells
+	// '}': Jump DOWN to next row with unrevealed cells
 	if (key === '}') {
-		while (jumps > 0) {
+		for (let i = 0; i < multiplier; i++) {
 			if (r >= rows - 1) break;
-			r++;
-			let found = false;
-			while (r < rows) {
-				// Scan row Left->Right for first closed cell
-				for (let i = 0; i < cols; i++) {
-					if (grid[r]?.[i] && !grid[r][i].isOpen) {
-						c = i;
-						found = true;
-						break;
-					}
+			for (let nextR = r + 1; nextR < rows; nextR++) {
+				const firstClosed = grid[nextR].findIndex((cell) => !cell.isOpen);
+				if (firstClosed > -1) {
+					r = nextR;
+					c = firstClosed;
+					break;
 				}
-				if (found) break;
-				r++;
+				if (nextR === rows - 1) r = rows - 1;
 			}
-			jumps--;
 		}
-		if (r < rows) return { r, c };
+		return { r, c };
 	}
 
-	// '{' -> Jump UP to previous row that has unrevealed cells
+	// '{': Jump UP to previous row with unrevealed cells
 	if (key === '{') {
-		while (jumps > 0) {
+		for (let i = 0; i < multiplier; i++) {
 			if (r <= 0) break;
-			r--;
-			let found = false;
-			while (r >= 0) {
-				// Scan row Right->Left (to land on last unrevealed? or first? usually standard vim is vague here, we scan R->L)
-				for (let i = cols - 1; i >= 0; i--) {
-					if (grid[r]?.[i] && !grid[r][i].isOpen) {
-						c = i;
-						found = true;
-						break;
-					}
+			for (let nextR = r - 1; nextR >= 0; nextR--) {
+				const firstClosed = grid[nextR].findIndex((cell) => !cell.isOpen);
+				if (firstClosed > -1) {
+					r = nextR;
+					c = firstClosed;
+					break;
 				}
-				if (found) break;
-				r--;
+				if (nextR === 0) r = 0;
 			}
-			jumps--;
 		}
-		if (r >= 0) return { r, c };
+		return { r, c };
 	}
 
 	return null;

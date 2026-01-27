@@ -17,9 +17,9 @@
 		placeMines,
 		revealCell,
 		DIRECTIONS,
-		type Cell,
 		revealCellsAround,
-		countFlagsAround
+		countFlagsAround,
+		type Cell
 	} from '$lib/minesweeper';
 
 	import { supabase } from '$lib/supabase';
@@ -60,7 +60,9 @@
 		lastKey: '',
 		lastKeyTime: 0,
 		isMouseDown: false,
-		vimMode: false
+		vimMode: false,
+		operator: null as 'SMART' | 'FLAG' | 'REVEAL' | null,
+		operatorCount: 1
 	};
 
 	let search = {
@@ -165,6 +167,8 @@
 			r: Math.floor(game.size.rows / 2),
 			c: Math.floor(game.size.cols / 2)
 		};
+		input.operator = null;
+		input.buffer = '';
 	}
 
 	function startSession() {
@@ -264,6 +268,38 @@
 		}
 	}
 
+	function applyAction(type: string, r: number, c: number) {
+		if (!game.grid[r] || !game.grid[r][c]) return;
+
+		if (type === 'FLAG') {
+			toggleFlag(r, c);
+		} else if (type === 'REVEAL') {
+			handleClick(r, c);
+		} else if (type === 'SMART') {
+			if (!game.grid[r][c].isOpen) toggleFlag(r, c);
+			else attemptChord(r, c);
+		}
+	}
+
+	function executeOperatorRange(dest: { r: number; c: number }) {
+		if (!input.operator) return;
+
+		const r1 = Math.min(input.cursor.r, dest.r);
+		const r2 = Math.max(input.cursor.r, dest.r);
+		const c1 = Math.min(input.cursor.c, dest.c);
+		const c2 = Math.max(input.cursor.c, dest.c);
+
+		for (let r = r1; r <= r2; r++) {
+			for (let c = c1; c <= c2; c++) {
+				applyAction(input.operator, r, c);
+			}
+		}
+
+		input.cursor = dest;
+		input.operator = null;
+		input.operatorCount = 1;
+	}
+
 	function handleInput(e: KeyboardEvent) {
 		if (search.active) {
 			e.preventDefault();
@@ -285,7 +321,6 @@
 
 		const activeEl = document.activeElement;
 		if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
-
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
 
 		if (e.key === 'Tab') {
@@ -294,22 +329,19 @@
 			return;
 		}
 
-		// Normal Mode: Cancel numeric inputs (Vim counts)
 		if (e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'))) {
 			e.preventDefault();
-
-			if (input.buffer.length > 0) {
-				input.buffer = '';
-				return;
-			}
-
+			input.buffer = '';
+			input.operator = null;
 			return;
 		}
 
 		const now = Date.now();
 		if (e.key === 'g' && input.lastKey === 'g' && now - input.lastKeyTime < 500) {
-			input.cursor = { r: 0, c: input.cursor.c };
 			input.lastKey = '';
+			const dest = { r: 0, c: input.cursor.c };
+			if (input.operator) executeOperatorRange(dest);
+			else input.cursor = dest;
 			input.buffer = '';
 			return;
 		}
@@ -319,11 +351,12 @@
 			return;
 		}
 
-		const mult = input.buffer.length > 0 ? parseInt(input.buffer) : 1;
+		const currentMult = input.buffer.length > 0 ? parseInt(input.buffer) : 1;
+		const totalMult = input.operator ? input.operatorCount * currentMult : currentMult;
 
 		const jumpDest = calculateVimJump(
 			e.key,
-			mult,
+			totalMult,
 			input.cursor,
 			game.grid,
 			game.size.rows,
@@ -331,17 +364,19 @@
 		);
 
 		if (jumpDest) {
-			input.cursor = jumpDest;
+			input.vimMode = true;
+			if (input.operator) {
+				executeOperatorRange(jumpDest);
+			} else {
+				input.cursor = jumpDest;
+			}
 			input.buffer = '';
 			return;
 		}
 
 		const action = handleVimKey(e.key);
 		if (action) {
-			// Not enabling Vim Mode when pressing space
-			if (action.type !== 'FLAG' && action.type !== 'SMART') {
-				input.vimMode = true;
-			}
+			if (action.type !== 'FLAG' && action.type !== 'SMART') input.vimMode = true;
 			e.preventDefault();
 
 			if (action.type === 'START_SEARCH') {
@@ -367,47 +402,18 @@
 			}
 			if (action.type === 'ZERO') {
 				if (input.buffer.length > 0) input.buffer += '0';
-				else input.cursor = { r: input.cursor.r, c: 0 };
 				return;
 			}
 
-			if (action.type === 'START_ROW') {
-				input.cursor = { r: input.cursor.r, c: 0 };
-				input.buffer = '';
+			if (action.type === 'SMART' || action.type === 'FLAG' || action.type === 'REVEAL') {
+				if (input.buffer.length > 0) {
+					input.operator = action.type;
+					input.operatorCount = currentMult;
+					input.buffer = '';
+				} else {
+					applyAction(action.type, input.cursor.r, input.cursor.c);
+				}
 				return;
-			}
-			if (action.type === 'GO_TOP') {
-				input.cursor = { r: 0, c: input.cursor.c };
-				input.buffer = '';
-				return;
-			}
-			if (action.type === 'GO_BOTTOM') {
-				input.cursor = { r: game.size.rows - 1, c: input.cursor.c };
-				input.buffer = '';
-				return;
-			}
-
-			if (action.type === 'MOVE_CURSOR') {
-				input.cursor.r = Math.max(
-					0,
-					Math.min(game.size.rows - 1, input.cursor.r + action.dy * mult)
-				);
-				input.cursor.c = Math.max(
-					0,
-					Math.min(game.size.cols - 1, input.cursor.c + action.dx * mult)
-				);
-				input.buffer = '';
-			} else if (action.type === 'FLAG') {
-				toggleFlag(input.cursor.r, input.cursor.c);
-				input.buffer = '';
-			} else if (action.type === 'REVEAL') {
-				handleClick(input.cursor.r, input.cursor.c);
-				input.buffer = '';
-			} else if (action.type === 'SMART') {
-				if (!game.grid[input.cursor.r][input.cursor.c].isOpen)
-					toggleFlag(input.cursor.r, input.cursor.c);
-				else attemptChord(input.cursor.r, input.cursor.c);
-				input.buffer = '';
 			}
 		}
 	}
@@ -651,6 +657,14 @@
 				isMouseDown={input.isMouseDown}
 				on:click={(e) => handleClick(e.detail.r, e.detail.c)}
 				on:flag={(e) => toggleFlag(e.detail.r, e.detail.c)}
+				on:hover={(e) => {
+					input.cursor = e.detail;
+					input.vimMode = false;
+				}}
+				on:mousedown={() => {
+					if (game.state === 'playing') input.isMouseDown = true;
+					input.vimMode = false;
+				}}
 			/>
 		</div>
 	{/if}
