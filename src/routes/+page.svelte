@@ -364,6 +364,7 @@
 		);
 
 		if (jumpDest) {
+			e.preventDefault();
 			input.vimMode = true;
 			if (input.operator) {
 				executeOperatorRange(jumpDest);
