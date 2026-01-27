@@ -648,16 +648,9 @@
 				numCols={game.size.cols}
 				gameState={game.state}
 				vimMode={input.vimMode}
+				isMouseDown={input.isMouseDown}
 				on:click={(e) => handleClick(e.detail.r, e.detail.c)}
 				on:flag={(e) => toggleFlag(e.detail.r, e.detail.c)}
-				on:hover={(e) => {
-					input.cursor = e.detail;
-					input.vimMode = false;
-				}}
-				on:mousedown={() => {
-					if (game.state === 'playing') input.isMouseDown = true;
-					input.vimMode = false;
-				}}
 			/>
 		</div>
 	{/if}

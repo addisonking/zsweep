@@ -8,6 +8,7 @@
 	export let numCols: number;
 	export let gameState: 'pending' | 'playing' | 'finished' = 'pending';
 	export let vimMode: boolean = false;
+	export let isMouseDown: boolean = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -37,14 +38,17 @@
 >
 	{#each grid as row, r (r)}
 		{#each row as cell, c (c)}
+			{@const isPressed = isMouseDown && cursor.r === r && cursor.c === c && !cell.isFlagged}
 			<button
 				type="button"
 				class="flex h-8 w-8 items-center justify-center rounded-sm text-sm font-bold transition-all duration-75 focus:outline-none
-      {vimMode ? 'cursor-none' : 'cursor-default'}
-      {cell.isOpen ? 'bg-sub/10' : `bg-sub/30 ${!vimMode ? 'hover:bg-sub/50' : ''}`}
-      {cell.isMine && cell.isOpen ? 'bg-error text-bg' : ''}
-      {cell.isMine && !cell.isOpen && gameState === 'finished' ? 'bg-error/50 opacity-50' : ''}
-      {vimMode && cursor.r === r && cursor.c === c
+          {vimMode ? 'cursor-none' : 'cursor-default'}
+          {cell.isOpen || isPressed
+					? 'bg-sub/10'
+					: `bg-sub/30 ${!vimMode ? 'hover:bg-sub/50' : ''}`}
+          {cell.isMine && cell.isOpen ? 'bg-error text-bg' : ''}
+          {cell.isMine && !cell.isOpen && gameState === 'finished' ? 'bg-error/50 opacity-50' : ''}
+          {vimMode && cursor.r === r && cursor.c === c
 					? 'z-10 ring-2 ring-main/50 brightness-110'
 					: ''}"
 				on:mousedown={(e) => {
@@ -52,7 +56,11 @@
 						handleRightClick(r, c);
 					}
 				}}
-				on:click={() => handleLeftClick(r, c)}
+				on:mouseup={(e) => {
+					if (e.button === 0) {
+						handleLeftClick(r, c);
+					}
+				}}
 				on:contextmenu|preventDefault
 				on:mouseenter={() => handleHover(r, c)}
 				aria-label={cell.isOpen
