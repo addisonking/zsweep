@@ -40,15 +40,20 @@
 			<button
 				type="button"
 				class="flex h-8 w-8 items-center justify-center rounded-sm text-sm font-bold transition-all duration-75 focus:outline-none
-          {vimMode ? 'cursor-none' : 'cursor-default'}
-          {cell.isOpen ? 'bg-sub/10' : `bg-sub/30 ${!vimMode ? 'hover:bg-sub/50' : ''}`}
-          {cell.isMine && cell.isOpen ? 'bg-error text-bg' : ''}
-          {cell.isMine && !cell.isOpen && gameState === 'finished' ? 'bg-error/50 opacity-50' : ''}
-          {vimMode && cursor.r === r && cursor.c === c
+      {vimMode ? 'cursor-none' : 'cursor-default'}
+      {cell.isOpen ? 'bg-sub/10' : `bg-sub/30 ${!vimMode ? 'hover:bg-sub/50' : ''}`}
+      {cell.isMine && cell.isOpen ? 'bg-error text-bg' : ''}
+      {cell.isMine && !cell.isOpen && gameState === 'finished' ? 'bg-error/50 opacity-50' : ''}
+      {vimMode && cursor.r === r && cursor.c === c
 					? 'z-10 ring-2 ring-main/50 brightness-110'
 					: ''}"
+				on:mousedown={(e) => {
+					if (e.button === 2) {
+						handleRightClick(r, c);
+					}
+				}}
 				on:click={() => handleLeftClick(r, c)}
-				on:contextmenu|preventDefault={() => handleRightClick(r, c)}
+				on:contextmenu|preventDefault
 				on:mouseenter={() => handleHover(r, c)}
 				aria-label={cell.isOpen
 					? cell.isMine
