@@ -71,7 +71,7 @@ export function handleVimKey(key: string): VimAction {
 		case ' ':
 			return { type: 'SMART' };
 		case 'a':
-			return { type: 'FLAG' };
+			return { type: 'SMART' };
 
 		default:
 			return null;

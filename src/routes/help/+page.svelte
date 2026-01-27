@@ -4,9 +4,9 @@
 
 	const shortcuts = [
 		{ keys: ['Tab'], desc: 'Restart / Back to home' },
-		{ keys: ['Enter'], desc: 'Reveal a cell' },
-		{ keys: [':'], desc: 'Open palette' },
-		{ keys: ['Esc'], desc: 'Cancel operator / Clear selection' }
+		{ keys: ['Enter / i'], desc: 'Reveal a cell' },
+		{ keys: ['Space / a'], desc: 'Flag or chord' },
+		{ keys: [':'], desc: 'Open palette' }
 	];
 
 	const motions = [
@@ -14,7 +14,8 @@
 		{ keys: ['w', 'b'], desc: 'Jump forward / backward by word' },
 		{ keys: ['gg', 'G'], desc: 'Jump to Top / Bottom of grid' },
 		{ keys: ['/'], desc: 'Search for a number (e.g. /7)' },
-		{ keys: ['n', 'N'], desc: 'Next / Previous search match' }
+		{ keys: ['n', 'N'], desc: 'Next / Previous search match' },
+		{ keys: ['Esc'], desc: 'Cancel operator / Clear selection' }
 	];
 
 	const operators = [
