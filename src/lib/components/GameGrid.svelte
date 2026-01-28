@@ -11,8 +11,10 @@
 	export let isMouseDown: boolean = false;
 
 	const dispatch = createEventDispatcher();
+
 	let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 	let longPressHandled = false;
+	let touchFeedback: { r: number; c: number } | null = null;
 
 	function handleLeftClick(r: number, c: number) {
 		dispatch('click', { r, c });
@@ -30,12 +32,24 @@
 		dispatch('mousedown');
 	}
 
+	function triggerTouchFeedback(r: number, c: number) {
+		touchFeedback = { r, c };
+		setTimeout(() => {
+			if (touchFeedback?.r === r && touchFeedback?.c === c) {
+				touchFeedback = null;
+			}
+		}, 500);
+	}
+
 	function handleTouchStart(r: number, c: number) {
 		longPressHandled = false;
 		longPressTimer = setTimeout(() => {
 			handleRightClick(r, c);
 			longPressHandled = true;
-			// Attempt vibration (works on Android, ignored on iOS)
+
+			triggerTouchFeedback(r, c);
+
+			// iOS ignored
 			if (navigator.vibrate) navigator.vibrate(50);
 		}, 500);
 	}
@@ -72,7 +86,7 @@
 			{@const isPressed = isMouseDown && cursor.r === r && cursor.c === c && !cell.isFlagged}
 			<button
 				type="button"
-				class="flex h-8 w-8 select-none items-center justify-center rounded-sm text-sm font-bold transition-all
+				class="relative flex h-8 w-8 select-none items-center justify-center rounded-sm text-sm font-bold transition-all
           duration-200 focus:outline-none
           {vimMode ? 'cursor-none' : 'cursor-default'}
           {cell.isOpen || isPressed
@@ -124,6 +138,18 @@
 					<span class="animate-in zoom-in-50 text-error duration-200">
 						<Flag size={14} fill="currentColor" />
 					</span>
+				{/if}
+
+				{#if touchFeedback?.r === r && touchFeedback?.c === c}
+					<div
+						class="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2"
+					>
+						<div
+							class="animate-in slide-in-from-bottom-4 zoom-in fade-in text-error drop-shadow-lg duration-300"
+						>
+							<Flag size={32} fill="currentColor" />
+						</div>
+					</div>
 				{/if}
 			</button>
 		{/each}
