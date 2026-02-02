@@ -112,7 +112,9 @@
 					<h2 class="text-2xl font-bold">Mine Patterns</h2>
 				</div>
 
-				<div class="grid gap-8">
+				<!-- Basic Patterns -->
+				<h3 class="mt-4 text-xl font-semibold">Basic Patterns</h3>
+				<div class="grid gap-4 sm:grid-cols-2">
 					<PatternDemo
 						pattern="1-2-1"
 						title="The 1-2-1 Pattern"
@@ -124,11 +126,42 @@
 						title="The 1-2-2-1 Pattern"
 						desc="A 1-2-2-1 sequence indicates that the two mines are located between the 2s."
 					/>
+				</div>
 
+				<!-- Intermediate Patterns -->
+				<h3 class="mt-6 text-xl font-semibold">Intermediate Patterns</h3>
+				<div class="grid gap-4 sm:grid-cols-2">
 					<PatternDemo
 						pattern="wall-3"
 						title="The Wall of 3s"
 						desc="If a 3 is touching exactly 3 hidden squares (flagged or not), all of them must be mines."
+					/>
+					<PatternDemo
+						pattern="2-3-2"
+						title="The 2-3-2 Pattern"
+						desc="The 3 touches exactly 3 hidden squares. Mines can be deduced from surrounding numbers."
+					/>
+				</div>
+
+				<!-- Advanced Patterns -->
+				<h3 class="mt-6 text-xl font-semibold">Advanced Patterns</h3>
+				<div class="grid gap-4 sm:grid-cols-2">
+					<PatternDemo
+						pattern="corner-l"
+						title="Corner L Pattern"
+						desc="Numbers forming an L in the corner often indicate mines along the edges and at the corner itself."
+					/>
+
+					<PatternDemo
+						pattern="t-junction"
+						title="T-Junction Pattern"
+						desc="A T-shaped number formation usually allows you to deduce mine locations at the ends of the top bar and base of the T."
+					/>
+
+					<PatternDemo
+						pattern="1-2-1-stair"
+						title="1-2-1 Staircase"
+						desc="A repeating 1-2-1 sequence along a diagonal or edge indicates a predictable arrangement of mines."
 					/>
 				</div>
 			</section>
