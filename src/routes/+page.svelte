@@ -29,6 +29,7 @@
 	import ResultView from '$lib/components/ResultView.svelte';
 	import CustomSettingsModal from '$lib/components/CustomSettingsModal.svelte';
 	import TutorialModal from '$lib/components/TutorialModal.svelte';
+	import { zenMode } from '$lib/zenStore';
 	import { lineNumbers } from '$lib/lineNumberStore';
 
 	import type { PageData } from './$types';
@@ -566,7 +567,9 @@
 <svelte:window on:mouseup={() => (input.isMouseDown = false)} />
 
 <div
-	class="relative flex min-h-screen flex-col items-center bg-bg font-mono text-text transition-colors duration-300"
+	class="relative flex min-h-screen flex-col items-center bg-bg font-mono text-text transition-all duration-500 {$zenMode
+		? 'fixed inset-0 justify-center'
+		: ''}"
 >
 	{#if game.state === 'finished'}
 		<ResultView
@@ -587,7 +590,7 @@
 	{:else}
 		<div
 			class="mb-8 flex select-none items-center gap-6 rounded-lg bg-sub/10 px-4 py-2 text-xs transition-all duration-300 {game.state ===
-			'playing'
+				'playing' || $zenMode
 				? 'pointer-events-none opacity-0'
 				: 'opacity-100'}"
 		>
@@ -645,7 +648,12 @@
 			</div>
 		</div>
 
-		<div class="animate-in fade-in flex flex-col gap-2 duration-300">
+		<div
+			class="animate-in fade-in flex flex-col gap-2 duration-300 {$zenMode
+				? 'scale-110'
+				: 'scale-100'}"
+			style="transition: transform 500ms ease-in-out;"
+		>
 			<div class="mb-2 flex select-none items-end justify-between px-1 text-main">
 				<div class="flex w-12 flex-col">
 					<span class="text-[10px] font-bold uppercase text-sub opacity-50">time</span>
@@ -708,7 +716,9 @@
 	{/if}
 
 	<footer
-		class="mt-auto flex w-full flex-col items-center gap-6 pb-32 pt-20 text-xs text-sub transition-colors duration-300"
+		class="mt-auto flex w-full flex-col items-center gap-6 pb-32 pt-20 text-xs text-sub transition-all duration-300 {$zenMode
+			? 'pointer-events-none opacity-0'
+			: 'opacity-100'}"
 	>
 		<div class="flex flex-wrap justify-center gap-8 opacity-60">
 			<a

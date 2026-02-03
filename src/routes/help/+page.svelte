@@ -6,7 +6,8 @@
 		{ keys: ['Tab'], desc: 'Restart / Back to home' },
 		{ keys: ['Enter / i'], desc: 'Reveal a cell' },
 		{ keys: ['Space / a'], desc: 'Flag or chord' },
-		{ keys: [':'], desc: 'Open palette' }
+		{ keys: [':'], desc: 'Open palette' },
+		{ keys: ['z'], desc: 'Toggle zen mode' }
 	];
 
 	const motions = [

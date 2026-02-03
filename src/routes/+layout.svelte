@@ -7,6 +7,10 @@
 
 	import { supabase } from '$lib/supabase';
 	import { currentTheme } from '$lib/themeStore';
+	import { zenMode } from '$lib/zenStore';
+
+	$: isHomePage = $page.url.pathname === '/';
+	$: showZenUI = $zenMode && isHomePage;
 
 	import CommandPalette from '$lib/components/CommandPalette.svelte';
 
@@ -24,6 +28,16 @@
 			e.preventDefault();
 			showPalette = !showPalette;
 			return;
+		}
+
+		if (e.key === 'z' && !e.metaKey && !e.ctrlKey && !e.altKey && isHomePage) {
+			const active = document.activeElement;
+			const isInput = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+			if (!isInput && !showPalette) {
+				e.preventDefault();
+				$zenMode = !$zenMode;
+				return;
+			}
 		}
 
 		if (e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'))) {
@@ -102,7 +116,11 @@
 </svelte:head>
 
 <div class="relative min-h-screen bg-bg pb-20 font-mono text-text transition-colors duration-300">
-	<header class="flex w-full items-center justify-between p-8">
+	<header
+		class="flex w-full items-center justify-between p-8 transition-opacity duration-300 {showZenUI
+			? 'pointer-events-none opacity-0'
+			: 'opacity-100'}"
+	>
 		<div class="flex items-center gap-5">
 			<a
 				href="/"
@@ -200,7 +218,11 @@
 
 	<CommandPalette bind:show={showPalette} />
 
-	<div class="pointer-events-none fixed bottom-6 left-0 right-0 z-50 px-8">
+	<div
+		class="pointer-events-none fixed bottom-6 left-0 right-0 z-50 px-8 transition-opacity duration-300 {showZenUI
+			? 'opacity-0'
+			: 'opacity-100'}"
+	>
 		<div class="flex w-full select-none justify-between">
 			<div class="flex flex-col gap-2 text-[10px] font-bold tracking-widest text-sub opacity-60">
 				<div class="flex items-center gap-3">
