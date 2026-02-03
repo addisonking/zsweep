@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { Bomb, Flag } from 'lucide-svelte';
 	import type { Cell } from '$lib/minesweeper';
+	import type { LineNumberMode } from '$lib/lineNumberStore';
 
 	export let grid: Cell[][] = [];
 	export let cursor: { r: number; c: number } = { r: 0, c: 0 };
@@ -9,6 +10,7 @@
 	export let gameState: 'pending' | 'playing' | 'finished' = 'pending';
 	export let vimMode: boolean = false;
 	export let isMouseDown: boolean = false;
+	export let lineNumberMode: LineNumberMode = 'off';
 
 	const dispatch = createEventDispatcher();
 
@@ -75,12 +77,38 @@
 </script>
 
 <div
-	class="grid select-none gap-1 bg-bg transition-all duration-300 {vimMode ? 'cursor-none' : ''}"
-	style="grid-template-columns: repeat({numCols}, minmax(0, 1fr)); touch-action: none;"
+	class="relative select-none bg-bg transition-all duration-300 {vimMode ? 'cursor-none' : ''}"
+	style="touch-action: none;"
 	on:mousedown={handleMouseDown}
 	on:contextmenu|preventDefault
 	role="grid"
 >
+	{#if lineNumberMode !== 'off'}
+		<div class="absolute -bottom-5 left-0 flex gap-1 text-center text-[10px] text-sub/50">
+			{#each Array(numCols) as _, c}
+				{@const isRelative = lineNumberMode === 'relative' || lineNumberMode === 'hybrid'}
+				{@const num = isRelative ? (c === cursor.c && lineNumberMode === 'hybrid' ? c + 1 : Math.abs(c - cursor.c)) : c + 1}
+				<div class="flex h-4 w-8 items-center justify-center {c === cursor.c ? 'text-main' : ''}">
+					{num}
+				</div>
+			{/each}
+		</div>
+		<div class="absolute -left-7 top-0 flex flex-col gap-1 text-right text-[10px] text-sub/50">
+			{#each grid as _, r}
+				{@const isRelative = lineNumberMode === 'relative' || lineNumberMode === 'hybrid'}
+				{@const num = isRelative ? (r === cursor.r && lineNumberMode === 'hybrid' ? grid.length - r : Math.abs(r - cursor.r)) : grid.length - r}
+				<div
+					class="flex h-8 w-6 items-center justify-end {r === cursor.r ? 'text-main' : ''}"
+				>
+					{num}
+				</div>
+			{/each}
+		</div>
+	{/if}
+	<div
+		class="grid gap-1"
+		style="grid-template-columns: repeat({numCols}, minmax(0, 1fr));"
+	>
 	{#each grid as row, r (r)}
 		{#each row as cell, c (c)}
 			{@const isPressed = isMouseDown && cursor.r === r && cursor.c === c && !cell.isFlagged}
@@ -140,18 +168,19 @@
 					</span>
 				{/if}
 
-				{#if touchFeedback?.r === r && touchFeedback?.c === c}
+			{#if touchFeedback?.r === r && touchFeedback?.c === c}
+				<div
+					class="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2"
+				>
 					<div
-						class="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2"
+						class="animate-in slide-in-from-bottom-4 zoom-in fade-in text-error drop-shadow-lg duration-300"
 					>
-						<div
-							class="animate-in slide-in-from-bottom-4 zoom-in fade-in text-error drop-shadow-lg duration-300"
-						>
-							<Flag size={32} fill="currentColor" />
-						</div>
+						<Flag size={32} fill="currentColor" />
 					</div>
-				{/if}
+				</div>
+			{/if}
 			</button>
 		{/each}
 	{/each}
+	</div>
 </div>
