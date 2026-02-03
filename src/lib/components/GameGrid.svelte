@@ -86,7 +86,8 @@
 	{#if lineNumberMode !== 'off'}
 		<div class="absolute -bottom-5 left-0 flex gap-1 text-center text-[10px] text-sub/50">
 			{#each Array(numCols) as _, c}
-				{@const num = lineNumberMode === 'relative' ? Math.abs(c - cursor.c) : c + 1}
+				{@const isRelative = lineNumberMode === 'relative' || lineNumberMode === 'hybrid'}
+				{@const num = isRelative ? (c === cursor.c && lineNumberMode === 'hybrid' ? c + 1 : Math.abs(c - cursor.c)) : c + 1}
 				<div class="flex h-4 w-8 items-center justify-center {c === cursor.c ? 'text-main' : ''}">
 					{num}
 				</div>
@@ -94,7 +95,8 @@
 		</div>
 		<div class="absolute -left-7 top-0 flex flex-col gap-1 text-right text-[10px] text-sub/50">
 			{#each grid as _, r}
-				{@const num = lineNumberMode === 'relative' ? Math.abs(r - cursor.r) : grid.length - r}
+				{@const isRelative = lineNumberMode === 'relative' || lineNumberMode === 'hybrid'}
+				{@const num = isRelative ? (r === cursor.r && lineNumberMode === 'hybrid' ? grid.length - r : Math.abs(r - cursor.r)) : grid.length - r}
 				<div
 					class="flex h-8 w-6 items-center justify-end {r === cursor.r ? 'text-main' : ''}"
 				>

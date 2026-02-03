@@ -12,7 +12,8 @@
 	const LINE_NUMBER_OPTIONS: { id: LineNumberMode; label: string }[] = [
 		{ id: 'off', label: 'Off' },
 		{ id: 'normal', label: 'Normal' },
-		{ id: 'relative', label: 'Relative' }
+		{ id: 'relative', label: 'Relative' },
+		{ id: 'hybrid', label: 'Hybrid' }
 	];
 	let searchQuery = '';
 	let searchInputEl: HTMLInputElement;
