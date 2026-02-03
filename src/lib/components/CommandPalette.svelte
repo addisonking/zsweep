@@ -1,13 +1,21 @@
 <script lang="ts">
-	import { Search, ChevronRight, Palette, Eye, EyeOff } from 'lucide-svelte';
+	import { Search, ChevronRight, Palette, Eye, EyeOff, Hash } from 'lucide-svelte';
 	import { THEMES, type Theme } from '$lib/themes';
 	import { currentTheme } from '$lib/themeStore';
 	import { zenMode } from '$lib/zenStore';
+	import { lineNumbers, type LineNumberMode } from '$lib/lineNumberStore';
 	import { tick } from 'svelte';
 
 	export let show = false;
 
-	let paletteView: 'root' | 'themes' = 'root';
+	let paletteView: 'root' | 'themes' | 'linenumbers' = 'root';
+
+	const LINE_NUMBER_OPTIONS: { id: LineNumberMode; label: string }[] = [
+		{ id: 'off', label: 'Off' },
+		{ id: 'normal', label: 'Normal' },
+		{ id: 'relative', label: 'Relative' },
+		{ id: 'hybrid', label: 'Hybrid' }
+	];
 	let searchQuery = '';
 	let searchInputEl: HTMLInputElement;
 
@@ -22,6 +30,10 @@
 
 	$: filteredThemes = THEMES.filter((t) =>
 		t.label.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
+	$: filteredLineNumbers = LINE_NUMBER_OPTIONS.filter((o) =>
+		o.label.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
 	const COMMANDS = [
@@ -44,6 +56,17 @@
 				$zenMode = !$zenMode;
 				close();
 			}
+		},
+		{
+			id: 'linenumbers',
+			label: 'Line Numbers...',
+			icon: Hash,
+			action: () => {
+				paletteView = 'linenumbers';
+				searchQuery = '';
+				selectedIndex = 0;
+				tick().then(() => searchInputEl?.focus());
+			}
 		}
 	];
 
@@ -51,7 +74,12 @@
 		c.label.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
-	$: currentItems = paletteView === 'root' ? filteredCommands : filteredThemes;
+	$: currentItems =
+		paletteView === 'root'
+			? filteredCommands
+			: paletteView === 'themes'
+				? filteredThemes
+				: filteredLineNumbers;
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (!show) return;
@@ -72,7 +100,7 @@
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
 			// If in submenu, go back; otherwise close
-			if (paletteView === 'themes') {
+			if (paletteView !== 'root') {
 				paletteView = 'root';
 				searchQuery = '';
 				selectedIndex = 0;
@@ -87,9 +115,11 @@
 
 		if (paletteView === 'root') {
 			item.action();
-		} else {
-			// It's a theme
+		} else if (paletteView === 'themes') {
 			$currentTheme = item;
+			close();
+		} else if (paletteView === 'linenumbers') {
+			$lineNumbers = item.id;
 			close();
 		}
 	}
@@ -118,7 +148,11 @@
 					bind:value={searchQuery}
 					on:input={() => (selectedIndex = 0)}
 					type="text"
-					placeholder={paletteView === 'root' ? 'Type to search...' : 'Search themes...'}
+					placeholder={paletteView === 'root'
+						? 'Type to search...'
+						: paletteView === 'themes'
+							? 'Search themes...'
+							: 'Select line number mode...'}
 					class="h-full w-full border-none bg-transparent text-xs text-text outline-none placeholder:text-sub/50"
 				/>
 			</div>
@@ -146,7 +180,7 @@
 									<span>{item.label}</span>
 								</div>
 								<ChevronRight size={12} class="opacity-50" />
-							{:else}
+							{:else if paletteView === 'themes'}
 								{@const theme = item as Theme}
 								<div class="flex items-center gap-3">
 									<div class="flex items-center gap-0.5">
@@ -158,6 +192,13 @@
 										{/each}
 									</div>
 									<span>{theme.label}</span>
+								</div>
+							{:else}
+								<div class="flex items-center gap-3">
+									<span>{item.label}</span>
+									{#if $lineNumbers === (item as { id: LineNumberMode; label: string }).id}
+										<span class="text-main">✓</span>
+									{/if}
 								</div>
 							{/if}
 						</button>

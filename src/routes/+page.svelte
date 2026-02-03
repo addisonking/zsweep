@@ -30,6 +30,7 @@
 	import CustomSettingsModal from '$lib/components/CustomSettingsModal.svelte';
 	import TutorialModal from '$lib/components/TutorialModal.svelte';
 	import { zenMode } from '$lib/zenStore';
+	import { lineNumbers } from '$lib/lineNumberStore';
 
 	import type { PageData } from './$types';
 	export let data: PageData;
@@ -671,6 +672,7 @@
 				gameState={game.state}
 				vimMode={input.vimMode}
 				isMouseDown={input.isMouseDown}
+				lineNumberMode={$lineNumbers}
 				on:click={(e) => handleClick(e.detail.r, e.detail.c)}
 				on:flag={(e) => toggleFlag(e.detail.r, e.detail.c)}
 				on:hover={(e) => {
