@@ -18,6 +18,14 @@
 		{ keys: ['Esc'], desc: 'Cancel operator / Clear selection' }
 	];
 
+	//Added a few additional Vim motions, that worked
+	motions.push(
+		{ keys: ['{', '}'], desc: 'Jump to previous / next block of numbers (planned)' },
+		{ keys: ['0'], desc: 'Jump to first cell in current row (planned)' },
+		{ keys: ['$'], desc: 'Jump to last cell in current row (planned)' }
+	);
+
+
 	const operators = [
 		{
 			combo: ['Space / a'],
@@ -104,7 +112,9 @@
 					<h2 class="text-2xl font-bold">Mine Patterns</h2>
 				</div>
 
-				<div class="grid gap-8">
+				<!-- Basic Patterns -->
+				<h3 class="mt-4 text-xl font-semibold">Basic Patterns</h3>
+				<div class="grid gap-4 sm:grid-cols-2">
 					<PatternDemo
 						pattern="1-2-1"
 						title="The 1-2-1 Pattern"
@@ -116,13 +126,119 @@
 						title="The 1-2-2-1 Pattern"
 						desc="A 1-2-2-1 sequence indicates that the two mines are located between the 2s."
 					/>
+				</div>
 
+				<!-- Intermediate Patterns -->
+				<h3 class="mt-6 text-xl font-semibold">Intermediate Patterns</h3>
+				<div class="grid gap-4 sm:grid-cols-2">
 					<PatternDemo
 						pattern="wall-3"
 						title="The Wall of 3s"
 						desc="If a 3 is touching exactly 3 hidden squares (flagged or not), all of them must be mines."
 					/>
+					<PatternDemo
+						pattern="2-3-2"
+						title="The 2-3-2 Pattern"
+						desc="The 3 touches exactly 3 hidden squares. Mines can be deduced from surrounding numbers."
+					/>
 				</div>
+
+				<!-- Advanced Patterns -->
+				<h3 class="mt-6 text-xl font-semibold">Advanced Patterns</h3>
+				<div class="grid gap-4 sm:grid-cols-2">
+					<PatternDemo
+						pattern="corner-l"
+						title="Corner L Pattern"
+						desc="Numbers forming an L in the corner often indicate mines along the edges and at the corner itself."
+					/>
+
+					<PatternDemo
+						pattern="t-junction"
+						title="T-Junction Pattern"
+						desc="A T-shaped number formation usually allows you to deduce mine locations at the ends of the top bar and base of the T."
+					/>
+
+					<PatternDemo
+						pattern="1-2-1-stair"
+						title="1-2-1 Staircase"
+						desc="A repeating 1-2-1 sequence along a diagonal or edge indicates a predictable arrangement of mines."
+					/>
+				</div>
+			</section>
+
+			<!-- Origin of Minesweeper Section -->
+			<section id="origin" class="scroll-mt-20">
+				<div class="mb-6 flex items-center gap-3 border-b border-main/10 pb-2">
+					<Hash class="text-main" />
+					<h2 class="text-2xl font-bold">The Origin of Minesweeper</h2>
+				</div>
+
+				<p>
+					Minesweeper started as a logic puzzle game and became widely known through Microsoft
+					Windows in the early 1990s. The original version, <strong>Mined-Out</strong>, was created
+					by Ian Andrew for the ZX Spectrum in 1983. Andrew notes that Microsoft Minesweeper
+					followed the same basic design.
+				</p>
+				<p>
+					The game encourages careful thinking and pattern recognition. Players uncover cells using
+					numerical clues to locate hidden mines, aiming to solve boards without guessing. Over
+					time, Minesweeper evolved into a game of skill and efficiency, where players track speed,
+					accuracy, and board complexity.
+				</p>
+				<p>
+					Modern variants, including <span class="font-bold text-main">zsweep</span>, build on these
+					classic mechanics while exploring new interfaces. Keyboard-focused controls and Vim-style
+					navigation make the game faster and more consistent for players who want a streamlined
+					experience.
+				</p>
+			</section>
+
+			<!--Technical Minesweeper Terms Section -->
+			<section id="technical-terms" class="scroll-mt-20">
+				<div class="mb-6 flex items-center gap-3 border-b border-main/10 pb-2">
+					<Hash class="text-main" />
+					<h2 class="text-2xl font-bold">Technical Minesweeper Terms</h2>
+				</div>
+
+				<!-- 3BV -->
+				<h3 class="mt-4 text-xl font-semibold">3BV (Bechtel’s Board Benchmark Value)</h3>
+				<p>
+					3BV measures how complex a Minesweeper board is. It counts the <strong
+						>minimum number of logical actions</strong
+					> needed to solve the board without guessing.
+				</p>
+				<p>
+					Each action that uncovers a safe area or resolves a pattern adds to the board’s 3BV.
+					Boards with higher 3BV are more challenging because they require more planning and careful
+					thinking. Players use 3BV to <strong>compare performance</strong> across different boards and
+					track improvement over time.
+				</p>
+
+				<!-- 3BV per second -->
+				<h3 class="mt-4 text-xl font-semibold">3BV per second (3BV/s)</h3>
+				<p>
+					3BV/s measures how efficiently you solve a board. It divides the board’s 3BV by the time
+					it took to finish.
+				</p>
+				<p>
+					This helps you see not just <strong>how fast you are</strong>, but also
+					<strong>how efficiently</strong> you are clearing the board. Higher 3BV/s means fewer unnecessary
+					clicks and smarter moves. It’s a simple way to track progress and compare your skills across
+					boards.
+				</p>
+
+				<!-- Chording -->
+				<h3 class="mt-4 text-xl font-semibold">Chording</h3>
+				<p>
+					Chording lets you reveal multiple safe cells at once. When a revealed number has the
+					correct number of mines flagged around it, activating that number opens all the remaining
+					safe cells nearby.
+				</p>
+				<p>
+					Chording can <strong>save time and clicks</strong>, but it only works if your flags are
+					placed correctly. Learning when and how to chord makes your play smoother and more
+					consistent, and it’s essential for improving efficiency on harder boards.
+				</p>
 			</section>
 
 			<section id="vim" class="scroll-mt-20">
