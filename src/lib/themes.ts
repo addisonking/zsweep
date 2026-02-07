@@ -113,6 +113,17 @@ export const THEMES = [
 			text: '192 202 245',
 			error: '247 118 142'
 		}
+	},
+	{
+		name: 'void',
+		label: 'Void',
+		colors: {
+			bg: '0 0 0',
+			main: '255 255 255',
+			sub: '160 160 160',
+			text: '255 255 255',
+			error: '255 100 100'
+		}
 	}
 ] satisfies Theme[];
 
