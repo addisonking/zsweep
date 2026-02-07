@@ -216,6 +216,30 @@
 		saveResult(win);
 	}
 
+	function revealFinalBoard(explodedR: number, explodedC: number) {
+		game.grid = game.grid.map((row, r) =>
+			row.map((cell, c) => {
+				const newCell = { ...cell };
+
+				if (newCell.isFlagged && !newCell.isMine) {
+					(newCell as any).isWrong = true;
+				}
+
+				if (newCell.isMine && !newCell.isFlagged) {
+					newCell.isOpen = true;
+				}
+
+				if (r === explodedR && c === explodedC) {
+					(newCell as any).isExploded = true;
+					newCell.isOpen = true;
+					newCell.isFlagged = false;
+				}
+
+				return newCell;
+			})
+		);
+	}
+
 	function handleClick(r: number, c: number) {
 		if (game.state === 'finished' || game.grid[r][c].isFlagged) return;
 		stats.clicks++;
@@ -224,7 +248,6 @@
 		if (game.isFirstClick) {
 			game.isFirstClick = false;
 			if (game.state === 'pending') startSession();
-			// clear any flags placed before game initialization
 			for (const row of game.grid) {
 				for (const cell of row) {
 					cell.isFlagged = false;
@@ -235,14 +258,17 @@
 		}
 
 		const canChord =
-			game.grid[r][c].isOpen && countFlagsAround(game.grid, r, c) === game.grid[r][c].neighborCount;
+			game.grid[r][c].isOpen &&
+			countFlagsAround(game.grid, r, c) === game.grid[r][c].neighborCount;
 
 		const result = canChord ? revealCellsAround(game.grid, r, c) : revealCell(game.grid, r, c);
 
 		game.grid = result.grid;
+
 		if (result.gameOver) {
 			triggerExplosion();
 			stats.sessionErrors += 1 + countWrongFlags();
+			revealFinalBoard(r, c);
 			finishSession(false);
 		} else {
 			checkWin();
@@ -270,7 +296,11 @@
 			DIRECTIONS.forEach(([dr, dc]) => {
 				const nr = r + dr,
 					nc = c + dc;
-				if (game.grid[nr]?.[nc] && !game.grid[nr][nc].isOpen && !game.grid[nr][nc].isFlagged) {
+				if (
+					game.grid[nr]?.[nc] &&
+					!game.grid[nr][nc].isOpen &&
+					!game.grid[nr][nc].isFlagged
+				) {
 					handleClick(nr, nc);
 				}
 			});
@@ -401,7 +431,8 @@
 				return;
 			}
 			if (action.type === 'PREV_MATCH' && search.matches.length > 0) {
-				search.matchIndex = (search.matchIndex - 1 + search.matches.length) % search.matches.length;
+				search.matchIndex =
+					(search.matchIndex - 1 + search.matches.length) % search.matches.length;
 				input.cursor = search.matches[search.matchIndex];
 				return;
 			}
@@ -473,7 +504,9 @@
 		if (stats.sessionTotalMines === 0) return 0;
 		return Math.max(
 			0,
-			Math.round(((stats.sessionTotalMines - stats.sessionErrors) / stats.sessionTotalMines) * 100)
+			Math.round(
+				((stats.sessionTotalMines - stats.sessionErrors) / stats.sessionTotalMines) * 100
+			)
 		);
 	}
 
@@ -578,6 +611,7 @@
 			cells={stats.cellsRevealed}
 			totalClicks={stats.clicks}
 			history={stats.history}
+			finalGrid={game.grid}
 			accuracy={stats.finalAccuracy}
 			sizeLabel={game.size.label}
 			gridsSolved={stats.gridsSolved}
@@ -630,7 +664,9 @@
 					<Hourglass size={12} class="text-sub opacity-50" />
 					{#each GAME_CONFIG.timeLimits as t}
 						<button
-							class={game.timeLimit === t ? 'font-bold text-main' : 'text-sub hover:text-text'}
+							class={game.timeLimit === t
+								? 'font-bold text-main'
+								: 'text-sub hover:text-text'}
 							on:click={() => setTime(t)}>{t}s</button
 						>
 					{/each}

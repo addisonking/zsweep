@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { onMount, createEventDispatcher } from 'svelte';
+	import { onMount } from 'svelte';
 	import Chart from 'chart.js/auto';
-	import { Skull, RotateCcw } from 'lucide-svelte';
-
-	const dispatch = createEventDispatcher();
+	import { Skull, Eye } from 'lucide-svelte';
+	import MapViewer from './MapViewer.svelte';
 
 	export let win = false;
 	export let time = 0;
 	export let totalMines = 0;
 	export let totalClicks = 0;
 	export let history: number[] = [];
+	export let finalGrid: any[][] = [];
 	export let accuracy = 0;
 	export let sizeLabel = '';
 	export let gridsSolved = 0;
@@ -20,6 +20,7 @@
 
 	let chartCanvas: HTMLCanvasElement;
 	let chartInstance: Chart | null = null;
+	let showMap = false;
 
 	$: minesPerMin = totalMines > 0 ? ((totalMines / Math.max(time, 1)) * 60).toFixed(1) : '0.0';
 
@@ -62,6 +63,10 @@
 	});
 </script>
 
+{#if showMap}
+	<MapViewer grid={finalGrid} onClose={() => (showMap = false)} />
+{/if}
+
 <div
 	class="flex min-h-[50vh] w-full flex-col items-center justify-center gap-8 duration-300 {win
 		? 'animate-in fade-in zoom-in'
@@ -95,7 +100,8 @@
 				<span class="text-xs font-bold uppercase text-sub opacity-50"
 					>{mode === 'standard' ? 'swept' : 'solved'}</span
 				>
-				<span class="text-2xl font-bold text-text">{mode === 'standard' ? cells : gridsSolved}</span
+				<span class="text-2xl font-bold text-text"
+					>{mode === 'standard' ? cells : gridsSolved}</span
 				>
 			</div>
 			<div class="flex flex-col">
@@ -115,8 +121,12 @@
 					>
 				</div>
 				<div>
-					<span class="mb-1 block text-2xl font-bold leading-none text-sub opacity-50">acc</span>
-					<span class="block text-[64px] font-bold leading-[0.8] text-main">{accuracy}%</span>
+					<span class="mb-1 block text-2xl font-bold leading-none text-sub opacity-50"
+						>acc</span
+					>
+					<span class="block text-[64px] font-bold leading-[0.8] text-main"
+						>{accuracy}%</span
+					>
 				</div>
 			</div>
 			<div class="relative h-[180px] w-full">
@@ -152,14 +162,19 @@
 	{/if}
 
 	<div class="mt-8 flex flex-col items-center gap-4">
-		<button
-			class="flex items-center gap-2 rounded-full bg-sub/10 px-6 py-3 font-bold text-main transition-all hover:bg-main hover:text-bg"
-			on:click={() => dispatch('restart')}
+		{#if finalGrid.length > 0}
+			<button
+				type="button"
+				class="flex items-center gap-2 rounded-full bg-sub/10 px-6 py-3 font-bold text-main transition-all hover:bg-main hover:text-bg"
+				on:click|stopPropagation={() => (showMap = true)}
+			>
+				<Eye size={18} />
+				<span>View Map</span>
+			</button>
+		{/if}
+		<span class="text-xs text-sub opacity-40"
+			>press <kbd class="font-sans">tab</kbd> to restart</span
 		>
-			<RotateCcw size={18} />
-			<span>Play Again</span>
-		</button>
-		<span class="text-xs text-sub opacity-40">or press <kbd class="font-sans">tab</kbd></span>
 	</div>
 </div>
 
@@ -187,44 +202,16 @@
 		animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 	}
 
+	.boom-text {
+		color: transparent;
+		-webkit-text-stroke: 2px #ef4444;
+	}
+
 	.glitch-text {
 		position: relative;
 		text-shadow:
 			2px 0 #0ff,
 			-2px 0 #f00;
 		animation: glitch-skew 1s infinite linear alternate-reverse;
-	}
-
-	@keyframes glitch-skew {
-		0% {
-			text-shadow:
-				2px 0 #ff0000,
-				-2px 0 #00ffff;
-			transform: skew(0deg);
-		}
-		20% {
-			text-shadow:
-				2px 0 #ff0000,
-				-2px 0 #00ffff;
-			transform: skew(0deg);
-		}
-		21% {
-			text-shadow:
-				-2px 0 #ff0000,
-				2px 0 #00ffff;
-			transform: skew(-10deg);
-		}
-		22% {
-			text-shadow:
-				2px 0 #ff0000,
-				-2px 0 #00ffff;
-			transform: skew(0deg);
-		}
-		100% {
-			text-shadow:
-				2px 0 #ff0000,
-				-2px 0 #00ffff;
-			transform: skew(0deg);
-		}
 	}
 </style>

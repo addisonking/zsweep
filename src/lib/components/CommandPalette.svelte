@@ -1,14 +1,27 @@
 <script lang="ts">
-	import { Search, ChevronRight, Palette, Eye, EyeOff, Hash } from 'lucide-svelte';
+	import {
+		Search,
+		ChevronRight,
+		Palette,
+		Eye,
+		EyeOff,
+		Hash,
+		Bomb,
+		Asterisk,
+		Skull,
+		Radiation,
+		Flame
+	} from 'lucide-svelte';
 	import { THEMES, type Theme } from '$lib/themes';
 	import { currentTheme } from '$lib/themeStore';
+	import { mineIcon } from '$lib/mineIconStore';
 	import { zenMode } from '$lib/zenStore';
 	import { lineNumbers, type LineNumberMode } from '$lib/lineNumberStore';
 	import { tick } from 'svelte';
 
 	export let show = false;
 
-	let paletteView: 'root' | 'themes' | 'linenumbers' = 'root';
+	let paletteView: 'root' | 'themes' | 'linenumbers' | 'mineicons' = 'root';
 
 	const LINE_NUMBER_OPTIONS: { id: LineNumberMode; label: string }[] = [
 		{ id: 'off', label: 'Off' },
@@ -16,9 +29,16 @@
 		{ id: 'relative', label: 'Relative' },
 		{ id: 'hybrid', label: 'Hybrid' }
 	];
+
+	const MINE_ICON_OPTIONS = [
+		{ id: 'asterisk', label: 'Asterisk', icon: Asterisk },
+		{ id: 'skull', label: 'Skull', icon: Skull },
+		{ id: 'radiation', label: 'Radiation', icon: Radiation },
+		{ id: 'flame', label: 'Flame', icon: Flame }
+	];
+
 	let searchQuery = '';
 	let searchInputEl: HTMLInputElement;
-
 	let selectedIndex = 0;
 
 	$: if (show) {
@@ -36,6 +56,10 @@
 		o.label.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
+	$: filteredMineIcons = MINE_ICON_OPTIONS.filter((o) =>
+		o.label.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
 	const COMMANDS = [
 		{
 			id: 'theme',
@@ -43,6 +67,17 @@
 			icon: Palette,
 			action: () => {
 				paletteView = 'themes';
+				searchQuery = '';
+				selectedIndex = 0;
+				tick().then(() => searchInputEl?.focus());
+			}
+		},
+		{
+			id: 'icons',
+			label: 'Mine Icons...',
+			icon: Bomb,
+			action: () => {
+				paletteView = 'mineicons';
 				searchQuery = '';
 				selectedIndex = 0;
 				tick().then(() => searchInputEl?.focus());
@@ -79,7 +114,9 @@
 			? filteredCommands
 			: paletteView === 'themes'
 				? filteredThemes
-				: filteredLineNumbers;
+				: paletteView === 'linenumbers'
+					? filteredLineNumbers
+					: filteredMineIcons;
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (!show) return;
@@ -99,7 +136,6 @@
 			executeSelection(currentItems[selectedIndex]);
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
-			// If in submenu, go back; otherwise close
 			if (paletteView !== 'root') {
 				paletteView = 'root';
 				searchQuery = '';
@@ -120,6 +156,9 @@
 			close();
 		} else if (paletteView === 'linenumbers') {
 			$lineNumbers = item.id;
+			close();
+		} else if (paletteView === 'mineicons') {
+			$mineIcon = item.id;
 			close();
 		}
 	}
@@ -152,7 +191,9 @@
 						? 'Type to search...'
 						: paletteView === 'themes'
 							? 'Search themes...'
-							: 'Select line number mode...'}
+							: paletteView === 'mineicons'
+								? 'Select mine icon...'
+								: 'Select line number mode...'}
 					class="h-full w-full border-none bg-transparent text-xs text-text outline-none placeholder:text-sub/50"
 				/>
 			</div>
@@ -164,9 +205,7 @@
 					{#each currentItems as item, i}
 						<button
 							class="group flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors
-                            {i === selectedIndex
-								? 'bg-sub/20 text-text'
-								: 'text-sub hover:bg-sub/10 hover:text-text'}"
+							{i === selectedIndex ? 'bg-sub/20 text-text' : 'text-sub hover:bg-sub/10 hover:text-text'}"
 							on:click={() => executeSelection(item)}
 							on:mouseenter={() => (selectedIndex = i)}
 						>
@@ -193,10 +232,22 @@
 									</div>
 									<span>{theme.label}</span>
 								</div>
+							{:else if paletteView === 'mineicons'}
+								<div class="flex items-center gap-3">
+									<svelte:component
+										this={item.icon}
+										size={12}
+										class={i === selectedIndex ? 'text-main' : 'text-sub'}
+									/>
+									<span>{item.label}</span>
+									{#if $mineIcon === item.id}
+										<span class="text-main">✓</span>
+									{/if}
+								</div>
 							{:else}
 								<div class="flex items-center gap-3">
 									<span>{item.label}</span>
-									{#if $lineNumbers === (item as { id: LineNumberMode; label: string }).id}
+									{#if $lineNumbers === item.id}
 										<span class="text-main">✓</span>
 									{/if}
 								</div>

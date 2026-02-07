@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { Bomb, Flag } from 'lucide-svelte';
+	import { Asterisk, Skull, Radiation, Flame, Flag, X } from 'lucide-svelte';
 	import type { Cell } from '$lib/minesweeper';
 	import type { LineNumberMode } from '$lib/lineNumberStore';
+	import { mineIcon } from '$lib/mineIconStore';
 
 	export let grid: Cell[][] = [];
 	export let cursor: { r: number; c: number } = { r: 0, c: 0 };
@@ -13,6 +14,13 @@
 	export let lineNumberMode: LineNumberMode = 'off';
 
 	const dispatch = createEventDispatcher();
+
+	const ICONS = {
+		asterisk: Asterisk,
+		skull: Skull,
+		radiation: Radiation,
+		flame: Flame
+	};
 
 	let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 	let longPressHandled = false;
@@ -51,7 +59,6 @@
 
 			triggerTouchFeedback(r, c);
 
-			// iOS ignored
 			if (navigator.vibrate) navigator.vibrate(50);
 		}, 500);
 	}
@@ -82,13 +89,22 @@
 	on:mousedown={handleMouseDown}
 	on:contextmenu|preventDefault
 	role="grid"
+	tabindex="-1"
 >
 	{#if lineNumberMode !== 'off'}
 		<div class="absolute -bottom-5 left-0 flex gap-1 text-center text-[10px] text-sub/50">
 			{#each Array(numCols) as _, c}
 				{@const isRelative = lineNumberMode === 'relative' || lineNumberMode === 'hybrid'}
-				{@const num = isRelative ? (c === cursor.c && lineNumberMode === 'hybrid' ? c + 1 : Math.abs(c - cursor.c)) : c + 1}
-				<div class="flex h-4 w-8 items-center justify-center {c === cursor.c ? 'text-main' : ''}">
+				{@const num = isRelative
+					? c === cursor.c && lineNumberMode === 'hybrid'
+						? c + 1
+						: Math.abs(c - cursor.c)
+					: c + 1}
+				<div
+					class="flex h-4 w-8 items-center justify-center {c === cursor.c
+						? 'text-main'
+						: ''}"
+				>
 					{num}
 				</div>
 			{/each}
@@ -96,91 +112,103 @@
 		<div class="absolute -left-7 top-0 flex flex-col gap-1 text-right text-[10px] text-sub/50">
 			{#each grid as _, r}
 				{@const isRelative = lineNumberMode === 'relative' || lineNumberMode === 'hybrid'}
-				{@const num = isRelative ? (r === cursor.r && lineNumberMode === 'hybrid' ? grid.length - r : Math.abs(r - cursor.r)) : grid.length - r}
+				{@const num = isRelative
+					? r === cursor.r && lineNumberMode === 'hybrid'
+						? grid.length - r
+						: Math.abs(r - cursor.r)
+					: grid.length - r}
 				<div
-					class="flex h-8 w-6 items-center justify-end {r === cursor.r ? 'text-main' : ''}"
+					class="flex h-8 w-6 items-center justify-end {r === cursor.r
+						? 'text-main'
+						: ''}"
 				>
 					{num}
 				</div>
 			{/each}
 		</div>
 	{/if}
-	<div
-		class="grid gap-1"
-		style="grid-template-columns: repeat({numCols}, minmax(0, 1fr));"
-	>
-	{#each grid as row, r (r)}
-		{#each row as cell, c (c)}
-			{@const isPressed = isMouseDown && cursor.r === r && cursor.c === c && !cell.isFlagged}
-			<button
-				type="button"
-				class="relative flex h-8 w-8 select-none items-center justify-center rounded-sm text-sm font-bold transition-all
-          duration-200 focus:outline-none
-          {vimMode ? 'cursor-none' : 'cursor-default'}
-          {cell.isOpen || isPressed
-					? 'bg-sub/10'
-					: `bg-sub/30 ${!vimMode ? 'hover:bg-sub/50' : ''}`}
-          {cell.isMine && cell.isOpen ? 'bg-error text-bg' : ''}
-          {cell.isMine && !cell.isOpen && gameState === 'finished' ? 'bg-error/50 opacity-50' : ''}
-          {vimMode && cursor.r === r && cursor.c === c
-					? 'z-10 ring-2 ring-main/50 brightness-110'
-					: ''}
-          {cell.isFlagged ? 'scale-90 bg-sub/20' : 'scale-100'}"
-				on:mousedown={(e) => {
-					if (e.button === 2) handleRightClick(r, c);
-				}}
-				on:dblclick={() => handleRightClick(r, c)}
-				on:mouseup={(e) => {
-					if (e.button === 0) handleLeftClick(r, c);
-				}}
-				on:touchstart|passive={() => handleTouchStart(r, c)}
-				on:touchend={(e) => handleTouchEnd(e, r, c)}
-				on:touchmove={handleTouchMove}
-				on:contextmenu|preventDefault
-				on:mouseenter={() => handleHover(r, c)}
-				aria-label={cell.isOpen
-					? cell.isMine
-						? 'Bomb'
-						: `${cell.neighborCount} mines nearby`
-					: cell.isFlagged
-						? 'Flagged'
-						: `Row ${r + 1} Column ${c + 1}`}
-			>
-				{#if cell.isOpen}
-					{#if cell.isMine}
-						<Bomb size={16} />
-					{:else if cell.neighborCount > 0}
-						<span
-							class={cell.neighborCount === 1
-								? 'text-blue-400'
-								: cell.neighborCount === 2
-									? 'text-green-400'
-									: cell.neighborCount === 3
-										? 'text-red-400'
-										: 'text-purple-400'}
-						>
-							{cell.neighborCount}
-						</span>
-					{/if}
-				{:else if cell.isFlagged}
-					<span class="animate-in zoom-in-50 text-error duration-200">
-						<Flag size={14} fill="currentColor" />
-					</span>
-				{/if}
-
-			{#if touchFeedback?.r === r && touchFeedback?.c === c}
-				<div
-					class="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2"
+	<div class="grid gap-1" style="grid-template-columns: repeat({numCols}, minmax(0, 1fr));">
+		{#each grid as row, r (r)}
+			{#each row as cell, c (c)}
+				{@const isPressed =
+					isMouseDown && cursor.r === r && cursor.c === c && !cell.isFlagged}
+				<button
+					type="button"
+					class="relative flex h-8 w-8 select-none items-center justify-center rounded-sm text-sm font-bold transition-all
+					duration-200 focus:outline-none
+					{vimMode ? 'cursor-none' : 'cursor-default'}
+					{cell.isOpen || isPressed ? 'bg-sub/10' : `bg-sub/30 ${!vimMode ? 'hover:bg-sub/50' : ''}`}
+					{cell.isMine && cell.isOpen ? 'bg-error text-bg' : ''}
+					{cell.isMine && !cell.isOpen && gameState === 'finished' ? 'bg-error/50 opacity-50' : ''}
+					{cell.isExploded ? '!border-red-600 !bg-red-600' : ''}
+					{vimMode && cursor.r === r && cursor.c === c ? 'z-10 ring-2 ring-main/50 brightness-110' : ''}
+					{cell.isFlagged ? 'scale-90 bg-sub/20' : 'scale-100'}"
+					on:mousedown={(e) => {
+						if (e.button === 2) handleRightClick(r, c);
+					}}
+					on:dblclick={() => handleRightClick(r, c)}
+					on:mouseup={(e) => {
+						if (e.button === 0) handleLeftClick(r, c);
+					}}
+					on:touchstart|passive={() => handleTouchStart(r, c)}
+					on:touchend={(e) => handleTouchEnd(e, r, c)}
+					on:touchmove={handleTouchMove}
+					on:contextmenu|preventDefault
+					on:mouseenter={() => handleHover(r, c)}
+					aria-label={cell.isOpen
+						? cell.isMine
+							? 'Mine'
+							: `${cell.neighborCount} mines nearby`
+						: cell.isFlagged
+							? 'Flagged'
+							: `Row ${r + 1} Column ${c + 1}`}
 				>
-					<div
-						class="animate-in slide-in-from-bottom-4 zoom-in fade-in text-error drop-shadow-lg duration-300"
-					>
-						<Flag size={32} fill="currentColor" />
-					</div>
-				</div>
-			{/if}
-			</button>
+					{#if cell.isOpen}
+						{#if cell.isMine}
+							<svelte:component
+								this={ICONS[$mineIcon]}
+								size={18}
+								fill={cell.isExploded ? 'currentColor' : 'none'}
+							/>
+						{:else if cell.neighborCount > 0}
+							<span
+								class={cell.neighborCount === 1
+									? 'text-blue-400'
+									: cell.neighborCount === 2
+										? 'text-green-400'
+										: cell.neighborCount === 3
+											? 'text-red-400'
+											: 'text-purple-400'}
+							>
+								{cell.neighborCount}
+							</span>
+						{/if}
+					{:else if cell.isFlagged}
+						{#if cell.isWrong}
+							<div class="relative flex items-center justify-center">
+								<Flag size={14} fill="currentColor" class="text-error opacity-50" />
+								<X size={20} class="absolute text-error" />
+							</div>
+						{:else}
+							<span class="animate-in zoom-in-50 text-error duration-200">
+								<Flag size={14} fill="currentColor" />
+							</span>
+						{/if}
+					{/if}
+
+					{#if touchFeedback?.r === r && touchFeedback?.c === c}
+						<div
+							class="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2"
+						>
+							<div
+								class="animate-in slide-in-from-bottom-4 zoom-in fade-in text-error drop-shadow-lg duration-300"
+							>
+								<Flag size={32} fill="currentColor" />
+							</div>
+						</div>
+					{/if}
+				</button>
+			{/each}
 		{/each}
-	{/each}
 	</div>
 </div>

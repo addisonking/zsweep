@@ -1,0 +1,44 @@
+<script lang="ts">
+	import { X } from 'lucide-svelte';
+	import GameGrid from './GameGrid.svelte';
+	import type { Cell } from '$lib/minesweeper';
+
+	export let grid: Cell[][] = [];
+	export let onClose: () => void;
+
+	function handleKey(e: KeyboardEvent) {
+		if (e.key === 'Escape') onClose();
+	}
+</script>
+
+<svelte:window on:keydown={handleKey} />
+
+<div
+	class="animate-in fade-in fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg/95 backdrop-blur-sm duration-200"
+>
+	<button
+		on:click={onClose}
+		class="absolute right-8 top-8 p-2 text-sub transition-colors hover:text-text"
+		aria-label="Close Map"
+	>
+		<X size={32} />
+	</button>
+
+	<h2 class="mb-6 text-2xl font-bold text-main">Map Inspection</h2>
+
+	<div class="pointer-events-none scale-90 overflow-hidden rounded-lg opacity-100 shadow-2xl">
+		{#if grid && grid.length > 0}
+			<GameGrid
+				{grid}
+				cursor={{ r: -1, c: -1 }}
+				numCols={grid[0].length}
+				gameState="finished"
+				vimMode={false}
+				isMouseDown={false}
+				lineNumberMode="off"
+			/>
+		{/if}
+	</div>
+
+	<p class="mt-6 font-mono text-sm text-sub opacity-60">Press ESC to close</p>
+</div>
