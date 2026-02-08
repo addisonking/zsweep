@@ -6,37 +6,25 @@
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 
-<br />
+
 <div align="center">
   <a href="https://zsweep.com">
     <img src="static/images/zee.png" alt="zsweep logo" width="80" height="80">
   </a>
+  <h1 align="center"><code>zsweep</code></h1>
+</div>
 
-<h3 align="center">zsweep</h3>
-
-  <p align="center">
-  <em>
-    A minimalist, keyboard-centric Minesweeper experience designed for flow state.
-  </em>
-</p>
 
 <p align="center">
+  <img src= "https://github.com/user-attachments/assets/3cc33aa0-d930-42c2-915b-c82738ad6a7e" alt="difi_demo" />
+</p>
+<p align="center">
   <a href="https://zsweep.com">
-    <strong>▶ PLAY BETA</strong>
+    <strong>▶ PLAY </strong>
   </a>
 </p>
 <br />
 
-<p align="center">
-  <a href="https://github.com/oug-t/zsweep/issues/new?labels=bug&template=bug-report.md">
-    Report Bug
-  </a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/oug-t/zsweep/issues/new?labels=enhancement&template=feature-request.md">
-    Request Feature
-  </a>
-</p>
-</div>
 
 <details>
   <summary>Table of Contents</summary>
@@ -65,8 +53,6 @@
 ## About The Project
 
 **zsweep** is a modern reimagining of Minesweeper, inspired by the "Monkeytype" aesthetic. It strips away the clutter of traditional Windows-95 clones to focus purely on speed, accuracy, and flow state.
-
-https://github.com/user-attachments/assets/6030f51b-11f3-4d0b-ab13-0e449c9b1b93
 
 Most Minesweeper clones are old-fashioned, click-heavy, and lack detailed stats. zsweep fixes this by providing:
 
