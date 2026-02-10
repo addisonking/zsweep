@@ -101,8 +101,7 @@
 				<span class="text-xs font-bold uppercase text-sub opacity-50"
 					>{mode === 'standard' ? 'swept' : 'solved'}</span
 				>
-				<span class="text-2xl font-bold text-text"
-					>{mode === 'standard' ? cells : gridsSolved}</span
+				<span class="text-2xl font-bold text-text">{mode === 'standard' ? cells : gridsSolved}</span
 				>
 			</div>
 			<div class="flex flex-col">
@@ -122,12 +121,8 @@
 					>
 				</div>
 				<div>
-					<span class="mb-1 block text-2xl font-bold leading-none text-sub opacity-50"
-						>acc</span
-					>
-					<span class="block text-[64px] font-bold leading-[0.8] text-main"
-						>{accuracy}%</span
-					>
+					<span class="mb-1 block text-2xl font-bold leading-none text-sub opacity-50">acc</span>
+					<span class="block text-[64px] font-bold leading-[0.8] text-main">{accuracy}%</span>
 				</div>
 			</div>
 			<div class="relative h-[180px] w-full">

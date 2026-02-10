@@ -69,8 +69,7 @@
 
 		if (e.key === 'z' && !e.metaKey && !e.ctrlKey && !e.altKey && isHomePage) {
 			const active = document.activeElement;
-			const isInput =
-				active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+			const isInput = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
 			if (!isInput && !showPalette) {
 				e.preventDefault();
 				$zenMode = !$zenMode;
@@ -89,8 +88,7 @@
 
 		if (e.key === 'Tab') {
 			const active = document.activeElement;
-			const isInput =
-				active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+			const isInput = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
 
 			if (!isInput && $page.url.pathname !== '/') {
 				e.preventDefault();
@@ -117,8 +115,7 @@
 
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			if (session?.user) {
-				currentUser =
-					session.user.user_metadata.full_name || session.user.email?.split('@')[0];
+				currentUser = session.user.user_metadata.full_name || session.user.email?.split('@')[0];
 			}
 		});
 
@@ -264,9 +261,7 @@
 			: 'opacity-100'}"
 	>
 		<div class="flex w-full select-none justify-between">
-			<div
-				class="flex flex-col gap-2 text-[10px] font-bold tracking-widest text-sub opacity-60"
-			>
+			<div class="flex flex-col gap-2 text-[10px] font-bold tracking-widest text-sub opacity-60">
 				<button
 					class="pointer-events-auto flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-100"
 					on:click={() => ($page.url.pathname === '/' ? location.reload() : goto('/'))}

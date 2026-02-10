@@ -100,11 +100,7 @@
 						? c + 1
 						: Math.abs(c - cursor.c)
 					: c + 1}
-				<div
-					class="flex h-4 w-8 items-center justify-center {c === cursor.c
-						? 'text-main'
-						: ''}"
-				>
+				<div class="flex h-4 w-8 items-center justify-center {c === cursor.c ? 'text-main' : ''}">
 					{num}
 				</div>
 			{/each}
@@ -117,11 +113,7 @@
 						? grid.length - r
 						: Math.abs(r - cursor.r)
 					: grid.length - r}
-				<div
-					class="flex h-8 w-6 items-center justify-end {r === cursor.r
-						? 'text-main'
-						: ''}"
-				>
+				<div class="flex h-8 w-6 items-center justify-end {r === cursor.r ? 'text-main' : ''}">
 					{num}
 				</div>
 			{/each}
@@ -130,8 +122,7 @@
 	<div class="grid gap-1" style="grid-template-columns: repeat({numCols}, minmax(0, 1fr));">
 		{#each grid as row, r (r)}
 			{#each row as cell, c (c)}
-				{@const isPressed =
-					isMouseDown && cursor.r === r && cursor.c === c && !cell.isFlagged}
+				{@const isPressed = isMouseDown && cursor.r === r && cursor.c === c && !cell.isFlagged}
 				<button
 					type="button"
 					class="relative flex h-8 w-8 select-none items-center justify-center rounded-sm text-sm font-bold transition-all
@@ -197,9 +188,7 @@
 					{/if}
 
 					{#if touchFeedback?.r === r && touchFeedback?.c === c}
-						<div
-							class="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2"
-						>
+						<div class="pointer-events-none absolute -top-12 left-1/2 z-50 -translate-x-1/2">
 							<div
 								class="animate-in slide-in-from-bottom-4 zoom-in fade-in text-error drop-shadow-lg duration-300"
 							>

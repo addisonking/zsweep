@@ -261,9 +261,9 @@
 						</p>
 						<p class="mt-2">
 							This helps you see not just <strong>how fast you are</strong>, but also
-							<strong>how efficiently</strong> you are clearing the board. Higher 3BV/s means fewer
-							unnecessary clicks and smarter moves. It’s a simple way to track progress and compare
-							your skills across boards.
+							<strong>how efficiently</strong> you are clearing the board. Higher 3BV/s means fewer unnecessary
+							clicks and smarter moves. It’s a simple way to track progress and compare your skills across
+							boards.
 						</p>
 					</div>
 

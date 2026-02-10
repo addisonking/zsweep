@@ -107,32 +107,86 @@ export function calculateVimJump(
 		return { r: target, c };
 	}
 
-	// Complex Motions
-
-	// 'w': Jump forward to next unrevealed cell
+	// 'w': Jump forward to the start of the NEXT consecutive block of unrevealed cells
 	if (key === 'w') {
 		let index = r * cols + c;
 		const total = rows * cols;
+
 		for (let i = 0; i < multiplier; i++) {
 			let scanned = 0;
-			do {
+			const startRow = Math.floor(index / cols);
+
+			// 1. Skip the rest of the current block of unrevealed cells.
+			// FIX: We stop if we hit an OPEN cell OR if we cross a row boundary.
+			while (scanned < total && !grid[Math.floor(index / cols)][index % cols].isOpen) {
+				const nextIndex = (index + 1) % total;
+				const nextRow = Math.floor(nextIndex / cols);
+
+				// If we are about to cross into a new row, the current block ends here.
+				if (nextRow !== Math.floor(index / cols)) {
+					// Advance index one step to land on the start of the new row
+					index = nextIndex;
+					scanned++;
+					break;
+				}
+
+				index = nextIndex;
+				scanned++;
+			}
+
+			// 2. Skip gap (open cells)
+			// (Gaps are allowed to wrap around lines, as they are just "empty space")
+			while (scanned < total && grid[Math.floor(index / cols)][index % cols].isOpen) {
 				index = (index + 1) % total;
 				scanned++;
-			} while (scanned < total && grid[Math.floor(index / cols)][index % cols].isOpen);
+			}
 		}
 		return { r: Math.floor(index / cols), c: index % cols };
 	}
 
-	// 'b': Jump backward to previous unrevealed cell
+	// 'b': Jump backward to the start of the PREVIOUS consecutive block
 	if (key === 'b') {
 		let index = r * cols + c;
 		const total = rows * cols;
+
 		for (let i = 0; i < multiplier; i++) {
 			let scanned = 0;
-			do {
+
+			const startRow = Math.floor(index / cols);
+
+			index = (index - 1 + total) % total;
+			scanned++;
+
+			while (scanned < total && !grid[Math.floor(index / cols)][index % cols].isOpen) {
+				const prevIndex = (index - 1 + total) % total;
+				const prevRow = Math.floor(prevIndex / cols);
+
+				if (prevRow !== Math.floor(index / cols)) {
+					if (Math.floor(index / cols) === startRow) break;
+				}
+
+				if (Math.floor(index / cols) !== startRow && prevRow !== Math.floor(index / cols)) break;
+
+				index = prevIndex;
+				scanned++;
+			}
+
+			while (scanned < total && grid[Math.floor(index / cols)][index % cols].isOpen) {
 				index = (index - 1 + total) % total;
 				scanned++;
-			} while (scanned < total && grid[Math.floor(index / cols)][index % cols].isOpen);
+			}
+
+			let targetRow = Math.floor(index / cols);
+			while (scanned < total) {
+				const prevIndex = (index - 1 + total) % total;
+				const prevRow = Math.floor(prevIndex / cols);
+				const prevCol = prevIndex % cols;
+
+				if (grid[prevRow][prevCol].isOpen || prevRow !== targetRow) break;
+
+				index = prevIndex;
+				scanned++;
+			}
 		}
 		return { r: Math.floor(index / cols), c: index % cols };
 	}
