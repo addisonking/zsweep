@@ -235,7 +235,16 @@
 				<input
 					bind:this={searchInputEl}
 					bind:value={searchQuery}
-					on:input={() => (selectedIndex = 0)}
+					on:input={() => {
+						selectedIndex = 0;
+						if (paletteView === 'themes') {
+							tick().then(() => {
+								if (filteredThemes[0]) {
+									previewTheme(filteredThemes[0]);
+								}
+							});
+						}
+					}}
 					type="text"
 					placeholder={paletteView === 'root'
 						? 'Type to search...'
