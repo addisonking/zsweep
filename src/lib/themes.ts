@@ -124,6 +124,17 @@ export const THEMES = [
 			text: '255 255 255',
 			error: '255 100 100'
 		}
+	},
+	{
+		name: 'tomorrow',
+		label: 'Tomorrow',
+		colors: {
+			bg: '255 255 255',
+			main: '66 113 174',
+			sub: '142 144 140',
+			text: '77 77 76',
+			error: '200 40 41'
+		}
 	}
 ] satisfies Theme[];
 
