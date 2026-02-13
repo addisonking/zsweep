@@ -135,6 +135,17 @@ export const THEMES = [
 			text: '77 77 76',
 			error: '200 40 41'
 		}
+	},
+	{
+		name: 'paper',
+		label: 'Paper',
+		colors: {
+			bg: '250 250 250',
+			main: '30 30 30',
+			sub: '120 120 120',
+			text: '50 50 50',
+			error: '80 80 80'
+		}
 	}
 ] satisfies Theme[];
 
