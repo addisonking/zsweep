@@ -61,15 +61,29 @@
 			if (e.key !== 'Shift') lastKey = '';
 		}
 
-		if (e.key === ':') {
-			e.preventDefault();
-			showPalette = !showPalette;
-			return;
+		if (e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'))) {
+			if (showPalette) {
+				e.preventDefault();
+				e.stopPropagation();
+				showPalette = false;
+				return;
+			} else {
+				const active = document.activeElement;
+				const isInput =
+					active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+
+				if (!isInput) {
+					e.preventDefault();
+					showPalette = true;
+					return;
+				}
+			}
 		}
 
 		if (e.key === 'z' && !e.metaKey && !e.ctrlKey && !e.altKey && isHomePage) {
 			const active = document.activeElement;
-			const isInput = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+			const isInput =
+				active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
 			if (!isInput && !showPalette) {
 				e.preventDefault();
 				$zenMode = !$zenMode;
@@ -77,18 +91,10 @@
 			}
 		}
 
-		if (e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'))) {
-			if (showPalette) {
-				e.preventDefault();
-				showPalette = false;
-				e.stopPropagation();
-				return;
-			}
-		}
-
 		if (e.key === 'Tab') {
 			const active = document.activeElement;
-			const isInput = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+			const isInput =
+				active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
 
 			if (!isInput && $page.url.pathname !== '/') {
 				e.preventDefault();
@@ -115,7 +121,8 @@
 
 		supabase.auth.getSession().then(({ data: { session } }) => {
 			if (session?.user) {
-				currentUser = session.user.user_metadata.full_name || session.user.email?.split('@')[0];
+				currentUser =
+					session.user.user_metadata.full_name || session.user.email?.split('@')[0];
 			}
 		});
 
@@ -261,7 +268,9 @@
 			: 'opacity-100'}"
 	>
 		<div class="flex w-full select-none justify-between">
-			<div class="flex flex-col gap-2 text-[10px] font-bold tracking-widest text-sub opacity-60">
+			<div
+				class="flex flex-col gap-2 text-[10px] font-bold tracking-widest text-sub opacity-60"
+			>
 				<button
 					class="pointer-events-auto flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-100"
 					on:click={() => ($page.url.pathname === '/' ? location.reload() : goto('/'))}
@@ -289,7 +298,7 @@
 				>
 					<kbd
 						class="flex min-w-[36px] justify-center rounded bg-sub/20 px-1.5 py-0.5 font-mono text-text shadow-sm"
-						>:</kbd
+						>esc</kbd
 					>
 					<span class="h-[1px] w-3 bg-sub/30"></span>
 					<span>palette</span>
