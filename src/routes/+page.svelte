@@ -344,11 +344,13 @@
 	}
 
 	function handleInput(e: KeyboardEvent) {
+		const isEscapeCombo = e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'));
+
 		if (search.active) {
 			e.preventDefault();
 			e.stopPropagation();
 
-			if (e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'))) {
+			if (isEscapeCombo) {
 				search.active = false;
 				search.term = '';
 			} else if (e.key === 'Enter') {
@@ -364,18 +366,22 @@
 
 		const activeEl = document.activeElement;
 		if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
+
+		if (isEscapeCombo) {
+			if (input.buffer.length > 0 || input.operator !== null) {
+				e.preventDefault();
+				e.stopPropagation(); // This prevents +layout.svelte from seeing the key
+				input.buffer = '';
+				input.operator = null;
+			}
+			return;
+		}
+
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
 
 		if (e.key === 'Tab') {
 			e.preventDefault();
 			fullReset();
-			return;
-		}
-
-		if (e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'))) {
-			e.preventDefault();
-			input.buffer = '';
-			input.operator = null;
 			return;
 		}
 

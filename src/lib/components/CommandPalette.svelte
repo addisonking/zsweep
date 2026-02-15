@@ -218,14 +218,13 @@
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
-
 {#if show}
 	<div
 		role="dialog"
 		aria-modal="true"
 		class="animate-in fade-in fixed inset-0 z-[100] flex items-start justify-center bg-black/60 backdrop-blur-sm duration-150"
 		on:mousedown|self={close}
+		on:keydown={handleKeydown}
 	>
 		<div
 			class="mt-[15vh] flex max-h-[50vh] w-[450px] flex-col overflow-hidden rounded-lg border border-sub/20 bg-bg font-mono text-text shadow-2xl"
@@ -265,13 +264,13 @@
 						<button
 							class="group flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors
 							{i === selectedIndex ? 'bg-sub/20 text-text' : 'text-sub hover:bg-sub/10 hover:text-text'}"
-						on:click={() => executeSelection(item)}
-						on:mouseenter={() => {
-							selectedIndex = i;
-							if (paletteView === 'themes') {
-								previewTheme(item as Theme);
-							}
-						}}
+							on:click={() => executeSelection(item)}
+							on:mouseenter={() => {
+								selectedIndex = i;
+								if (paletteView === 'themes') {
+									previewTheme(item as Theme);
+								}
+							}}
 						>
 							{#if paletteView === 'root'}
 								<div class="flex items-center gap-3">
