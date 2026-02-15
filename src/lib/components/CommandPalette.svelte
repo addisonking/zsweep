@@ -13,7 +13,7 @@
 		Flame,
 		LogOut
 	} from 'lucide-svelte';
-	import { THEMES, type Theme } from '$lib/themes';
+	import { THEMES, type Theme, applyThemeToRoot } from '$lib/themes';
 	import { currentTheme } from '$lib/themeStore';
 	import { mineIcon } from '$lib/mineIconStore';
 	import { zenMode } from '$lib/zenStore';
@@ -23,6 +23,7 @@
 	export let show = false;
 
 	let paletteView: 'root' | 'themes' | 'linenumbers' | 'mineicons' = 'root';
+	let originalTheme: Theme | null = null;
 
 	const LINE_NUMBER_OPTIONS: { id: LineNumberMode; label: string }[] = [
 		{ id: 'off', label: 'Off' },
@@ -46,6 +47,7 @@
 		paletteView = 'root';
 		searchQuery = '';
 		selectedIndex = 0;
+		originalTheme = null;
 		tick().then(() => searchInputEl?.focus());
 	}
 
@@ -67,6 +69,7 @@
 			label: 'Theme...',
 			icon: Palette,
 			action: () => {
+				originalTheme = $currentTheme;
 				paletteView = 'themes';
 				searchQuery = '';
 				selectedIndex = 0;
@@ -148,9 +151,13 @@
 		if (e.key === 'Escape' || (e.ctrlKey && (e.key === '[' || e.key === 'c'))) {
 			e.preventDefault();
 			if (paletteView !== 'root') {
+				if (paletteView === 'themes' && originalTheme) {
+					applyThemeToRoot(originalTheme);
+				}
 				paletteView = 'root';
 				searchQuery = '';
 				selectedIndex = 0;
+				originalTheme = null;
 			} else {
 				close();
 			}
@@ -161,9 +168,15 @@
 		if (e.key === 'ArrowDown') {
 			e.preventDefault();
 			selectedIndex = (selectedIndex + 1) % currentItems.length;
+			if (paletteView === 'themes' && currentItems[selectedIndex]) {
+				applyThemeToRoot(currentItems[selectedIndex] as Theme);
+			}
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault();
 			selectedIndex = (selectedIndex - 1 + currentItems.length) % currentItems.length;
+			if (paletteView === 'themes' && currentItems[selectedIndex]) {
+				applyThemeToRoot(currentItems[selectedIndex] as Theme);
+			}
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
 			if (paletteView === 'root' && (searchQuery === ':q' || searchQuery === ':wq')) {
@@ -180,6 +193,7 @@
 		if (paletteView === 'root') {
 			item.action();
 		} else if (paletteView === 'themes') {
+			originalTheme = null; // Don't restore on close since we're selecting
 			$currentTheme = item;
 			close();
 		} else if (paletteView === 'linenumbers') {
@@ -192,7 +206,15 @@
 	}
 
 	function close() {
+		if (originalTheme) {
+			applyThemeToRoot(originalTheme);
+			originalTheme = null;
+		}
 		show = false;
+	}
+
+	function previewTheme(theme: Theme) {
+		applyThemeToRoot(theme);
 	}
 </script>
 
@@ -213,7 +235,16 @@
 				<input
 					bind:this={searchInputEl}
 					bind:value={searchQuery}
-					on:input={() => (selectedIndex = 0)}
+					on:input={() => {
+						selectedIndex = 0;
+						if (paletteView === 'themes') {
+							tick().then(() => {
+								if (filteredThemes[0]) {
+									previewTheme(filteredThemes[0]);
+								}
+							});
+						}
+					}}
 					type="text"
 					placeholder={paletteView === 'root'
 						? 'Type to search...'
@@ -234,8 +265,13 @@
 						<button
 							class="group flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors
 							{i === selectedIndex ? 'bg-sub/20 text-text' : 'text-sub hover:bg-sub/10 hover:text-text'}"
-							on:click={() => executeSelection(item)}
-							on:mouseenter={() => (selectedIndex = i)}
+						on:click={() => executeSelection(item)}
+						on:mouseenter={() => {
+							selectedIndex = i;
+							if (paletteView === 'themes') {
+								previewTheme(item as Theme);
+							}
+						}}
 						>
 							{#if paletteView === 'root'}
 								<div class="flex items-center gap-3">
