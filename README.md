@@ -13,12 +13,6 @@
     <img src="https://github.com/user-attachments/assets/3cc33aa0-d930-42c2-915b-c82738ad6a7e" alt="zsweep gameplay demo" />
   </a>
 
-  <br />
-
-  <a href="https://zsweep.com">
-    <img src="static/images/zee.png" alt="zsweep logo" width="80" height="80">
-  </a>
-
   <p>
     <a href="https://zsweep.com">
       <strong>▶ PLAY</strong>
