@@ -7,10 +7,19 @@
 [![MIT License][license-shield]][license-url]
 
 <div align="center">
-  <h1><code>zsweep</code></h1>
+  <table>
+    <tr>
+      <td style="border: none;">
+        <img src="https://github.com/user-attachments/assets/edab7b46-8470-4ffc-b5f8-39e6a92558d3" width="100" />
+      </td>
+      <td style="border: none;">
+        <h1><code>zsweep</code></h1>
+      </td>
+    </tr>
+  </table>
 
   <a href="https://zsweep.com">
-    <img src="https://github.com/user-attachments/assets/3cc33aa0-d930-42c2-915b-c82738ad6a7e" alt="zsweep gameplay demo" />
+    <img src="https://github.com/user-attachments/assets/30f9a0db-2cf1-41b9-bf8d-2b53a3fe7bbc" alt="zsweep demo" />
   </a>
 
   <p>
