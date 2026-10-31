@@ -32,6 +32,19 @@ Keyboard support covers arrows/hjkl, enter/i to reveal, f/x to flag, space/a to
 flag/chord, and r to restart. This prototype does not implement the main game's
 full Vim operators and search. Mouse and touch use the existing grid component.
 
+## Manual feedback
+
+On 2026-10-31, a B run on 9×9 with 50 ms added round-trip delay felt "just as
+responsive" as normal play. It cleared in 25.913 s server time with 29 requests,
+65.8 ms mean move response and 73.0 ms p95. The mean includes about 15.8 ms beyond
+the deliberately added delay, covering local HTTP, UI updates and any queueing.
+
+Testing B at 400 ms added delay was described as "nearly unplayable". Each move
+waits for a round trip, and the ordered input queue can add further waiting.
+The next useful feel checks are 100 and 200 ms; no cutoff has been established
+between the two reported conditions. B remains a candidate if deployment latency
+is acceptable, but these local tests do not establish real production move latency.
+
 ## Shared rules
 
 Both variants use the existing mine placement, flood reveal, flag counting,
