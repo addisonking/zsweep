@@ -28,7 +28,7 @@ request; it approximates latency, not packet loss or bandwidth limits.
 
 Completed games, including losses, appear in a rolling list of twelve runs for
 the current page visit. Nothing is uploaded to profiles or global stats.
-Keyboard support covers arrows/hjkl, enter/i to reveal, f/x to flag, space to
+Keyboard support covers arrows/hjkl, enter/i to reveal, f/x to flag, space/a to
 flag/chord, and r to restart. This prototype does not implement the main game's
 full Vim operators and search. Mouse and touch use the existing grid component.
 
@@ -175,6 +175,9 @@ References: [Supabase getUser](https://supabase.com/docs/reference/javascript/au
 [SvelteKit server-only modules](https://svelte.dev/docs/kit/server-only-modules).
 
 ## Verification
+
+The [attack results](76-anticheat-attack-results.md) document two actual HTTP attack
+runs and how to reproduce them with `scripts/attack-anticheat.ts`.
 
 Run `bun test src/lib/game/anticheat src/lib/server/anticheat`, `bun run check`,
 and `bun run lint`. The current Vercel adapter accepts Node 20, 22 or 24 for builds;
