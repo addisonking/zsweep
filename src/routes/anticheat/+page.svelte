@@ -198,7 +198,12 @@
 		const target = event.target;
 		if (target instanceof HTMLElement) {
 			if (target.closest('input, select, a')) return;
-			if (target.closest('button') && !target.closest('[role="grid"]')) return;
+			if (
+				target.closest('button') &&
+				!target.closest('[role="grid"]') &&
+				['Enter', ' '].includes(event.key)
+			)
+				return;
 		}
 		if (event.metaKey || event.ctrlKey || event.altKey) return;
 		const directions: Record<string, [number, number]> = {
@@ -221,10 +226,11 @@
 			};
 			return;
 		}
-		if (['Enter', 'i', 'f', 'x', ' '].includes(event.key)) {
+		if (['Enter', 'i', 'f', 'x', ' ', 'a'].includes(event.key)) {
 			event.preventDefault();
 			const type =
-				['f', 'x'].includes(event.key) || (event.key === ' ' && !grid[cursor.r][cursor.c].isOpen)
+				['f', 'x'].includes(event.key) ||
+				([' ', 'a'].includes(event.key) && !grid[cursor.r][cursor.c].isOpen)
 					? 'flag'
 					: 'reveal';
 			submit({ type, ...cursor });
@@ -365,7 +371,7 @@
 	</div>
 	<p class="mb-8 text-xs leading-relaxed text-sub">
 		click to reveal or chord · right-click to flag · arrows / hjkl to move · enter / i to reveal ·
-		space to flag / chord · r to restart
+		space / a to flag / chord · r to restart
 	</p>
 
 	{#if trials.length}
