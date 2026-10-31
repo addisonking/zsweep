@@ -39,11 +39,15 @@ responsive" as normal play. It cleared in 25.913 s server time with 29 requests,
 65.8 ms mean move response and 73.0 ms p95. The mean includes about 15.8 ms beyond
 the deliberately added delay, covering local HTTP, UI updates and any queueing.
 
+At 100 ms added delay, B felt noticeably less snappy but remained acceptable:
+responses still kept pace with the player's decision-making. This is an acceptable
+test point, not a measured production response time or a final latency cutoff.
+
 Testing B at 400 ms added delay was described as "nearly unplayable". Each move
 waits for a round trip, and the ordered input queue can add further waiting.
-The next useful feel checks are 100 and 200 ms; no cutoff has been established
-between the two reported conditions. B remains a candidate if deployment latency
-is acceptable, but these local tests do not establish real production move latency.
+The 200 ms feel check remains pending. B remains a candidate if deployment latency
+is acceptable; measure response-time percentiles and spikes as well as the average.
+These local tests do not establish real production move latency.
 
 ## Shared rules
 
